@@ -8,6 +8,7 @@
 #include "logging.h"
 #include "mesh.h"
 #include "chunk.h"
+#include "entity.h"
 
 void GLAPIENTRY
 MessageCallback(GLenum source,
@@ -97,6 +98,15 @@ void Game::Run()
 	int seed = rand();
 	Chunk chunk = Chunk(FastNoise::New<FastNoise::Simplex>(), glm::vec3(0.0f, 0.0f, 0.0f), 16, seed);
 
+	Entity entity1 = Entity();
+	entity1.Start();
+
+	// Testing to make sure pointer lifetime lasts until end of entity.
+	{
+		std::unique_ptr<TestComponent> testComponent = std::make_unique<TestComponent>(TestComponent());
+		entity1.AddComponent(std::move(testComponent));
+	}
+
 	while (!glfwWindowShouldClose(window))
 	{
 		debugInfo.StartFrame();
@@ -115,6 +125,8 @@ void Game::Run()
 		ImGui::NewFrame();
 
 		debugInfo.Display();
+
+		entity1.Update();
 
 		// Display Game
 		ImGui::Render();
