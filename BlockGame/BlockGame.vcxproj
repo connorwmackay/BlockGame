@@ -153,8 +153,10 @@
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
+    <ClCompile Include="meshComponent.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="texture.cpp" />
+    <ClCompile Include="transformComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="chunk.h" />
@@ -163,9 +165,11 @@
     <ClInclude Include="game.h" />
     <ClInclude Include="logging.h" />
     <ClInclude Include="mesh.h" />
+    <ClInclude Include="meshComponent.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="texture.h" />
+    <ClInclude Include="transformComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Libraries\FastNoise2\bin\FastNoise.dll">

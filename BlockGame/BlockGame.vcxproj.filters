@@ -63,6 +63,12 @@
     <ClCompile Include="component.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="transformComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="meshComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="logging.h">
@@ -90,6 +96,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="component.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="transformComponent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="meshComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

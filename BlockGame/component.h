@@ -1,21 +1,19 @@
 #pragma once
 
+class Entity;
+
 class Component
 {
+protected:
+	Entity* owner_;
 public:
 	Component();
+	Component(Entity* owner);
 	virtual ~Component() = default;
 
 	virtual void Start();
 	virtual void Update();
-};
 
-/*
- * A test component.
- */
-class TestComponent : public Component
-{
-public:
-	void Start() override;
-	void Update() override;
+	void SetOwner(Entity* owner);
+	Entity* GetOwner();
 };

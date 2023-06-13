@@ -1,14 +1,17 @@
 #include "chunk.h"
 
 #include "logging.h"
+#include "meshComponent.h"
+#include "transformComponent.h"
 
 Chunk::Chunk(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator, glm::vec3 startingPosition, int size, int seed)
+	: Entity()
 {
-	position_ = startingPosition;
 	size_ = size;
 	blocks_ = std::vector<std::vector<std::vector<uint8_t>>>();
 	seed_ = seed;
 
+	AddComponent("transform", new TransformComponent(startingPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
 	UseNoise(noiseGenerator);
 	GenerateMesh();
 }
@@ -262,7 +265,7 @@ void Chunk::GenerateMesh()
 		}
 	}
 
-	mesh_ = mesh;
+	AddComponent("mesh", new MeshComponent(mesh));
 }
 
 bool Chunk::IsInChunk(int x, int y, int z)
@@ -305,22 +308,27 @@ bool Chunk::IsInChunk(int x, int y, int z)
 	return false;
 }
 
-void Chunk::Draw(glm::mat4 model, glm::mat4 view, glm::mat4 projection)
+void Chunk::Draw(glm::mat4 view, glm::mat4 projection)
 {
-	mesh_.Draw(model, view, projection);
+	MeshComponent* meshComponent = static_cast<MeshComponent*>(GetComponentByName("mesh"));
+	TransformComponent* transformComponent = static_cast<TransformComponent*>(GetComponentByName("transform"));
+
+	meshComponent->Draw(transformComponent->GetModel(), view, projection);
 }
 
 void Chunk::UseNoise(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator)
 {
+	glm::vec3 position = static_cast<TransformComponent*>(GetComponentByName("transform"))->GetTranslation();
+
 	// Fill the blocks_ container using noise
 	std::vector<float> simplexNoiseOutput(size_ * size_);
 	noiseGenerator->GenUniformGrid2D(
 		simplexNoiseOutput.data(),
-		(int)glm::floor(position_.x),
-		(int)glm::floor(position_.z),
+		(int)glm::floor(position.x),
+		(int)glm::floor(position.z),
 		size_,
 		size_,
-		0.01f,
+		0.02f,
 		seed_
 	);
 

@@ -9,6 +9,8 @@
 #include "mesh.h"
 #include "chunk.h"
 #include "entity.h"
+#include "meshComponent.h"
+#include "transformComponent.h"
 
 void GLAPIENTRY
 MessageCallback(GLenum source,
@@ -66,18 +68,17 @@ void Game::Run()
 {
 	debugInfo = DebugInfo();
 
-	float start = -8.0f;
-	float end = 8.0f;
+	float start = -1.0f;
+	float end = 1.0f;
 
 	stbi_set_flip_vertically_on_load(false);
 
-	/*
 	TextureData textureData = Texture::LoadTextureDataFromFile("./Assets/textureAtlas.png");
-	Texture2D* meshTexture = new Texture2D(textureData, GL_TEXTURE_2D, GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR);
+	Texture2D* meshTexture = new Texture2D(textureData, GL_TEXTURE_2D, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST);
 	Texture::FreeTextureData(textureData);
 
 	TextureAtlas textureAtlas = { 3, 6 };
-	SubTexture grassSubTexture = GetSubTextureFromTextureAtlas(0, 3, textureAtlas);
+	SubTexture grassSubTexture = GetSubTextureFromTextureAtlas(0, 2, textureAtlas);
 
 	Mesh mesh = Mesh(meshTexture);
 	mesh.AddVertex({ start, start, end, grassSubTexture.startS, grassSubTexture.startT });
@@ -85,27 +86,32 @@ void Game::Run()
 	mesh.AddVertex({ start, end, end, grassSubTexture.startS, grassSubTexture.endT });
 	mesh.AddVertex({ end, end, end, grassSubTexture.endS, grassSubTexture.endT });
 	mesh.AddFace({
-		{start, start, end},
-		{end, start, end},
-		{start, end, end},
-		{start, end, end},
-		{end, end, end},
-		{end, start, end}
+		{ start, start, end, grassSubTexture.startS, grassSubTexture.startT },
+        {end, start, end, grassSubTexture.endS, grassSubTexture.startT },
+		{ start, end, end, grassSubTexture.startS, grassSubTexture.endT },
+		{ start, end, end, grassSubTexture.startS, grassSubTexture.endT },
+        { end, end, end, grassSubTexture.endS, grassSubTexture.endT },
+		{end, start, end, grassSubTexture.endS, grassSubTexture.startT}
 	});
-	*/
+
+	auto fastNoiseSimplex = FastNoise::New<FastNoise::Simplex>();
 
 	srand(time(NULL));
 	int seed = rand();
-	Chunk chunk = Chunk(FastNoise::New<FastNoise::Simplex>(), glm::vec3(0.0f, 0.0f, 0.0f), 16, seed);
+	Chunk chunk1 = Chunk(fastNoiseSimplex, glm::vec3(0.0f, 0.0f, 0.0f), 16, seed);
+	Chunk chunk2 = Chunk(fastNoiseSimplex, glm::vec3(16.0f, 0.0f, 0.0f), 16, seed);
 
-	Entity entity1 = Entity();
-	entity1.Start();
+	Entity grassPlane = Entity();
+	grassPlane.AddComponent("mesh", new MeshComponent(mesh));
+	grassPlane.AddComponent("transform", new TransformComponent(
+		glm::vec3(10.0f, 6.0f, 10.0f),
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(8.0f, 8.0f, 1.0f)
+	));
 
-	// Testing to make sure pointer lifetime lasts until end of entity.
-	{
-		std::unique_ptr<TestComponent> testComponent = std::make_unique<TestComponent>(TestComponent());
-		entity1.AddComponent(std::move(testComponent));
-	}
+	grassPlane.Start();
+	chunk1.Start();
+	chunk2.Start();
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -126,14 +132,20 @@ void Game::Run()
 
 		debugInfo.Display();
 
-		entity1.Update();
+		TransformComponent* planeTransformComponent = static_cast<TransformComponent*>(grassPlane.GetComponentByName("transform"));
 
+		//TransformComponent* chunkTransformComponent = static_cast<TransformComponent*>(chunk.GetComponentByName("transform"));
+		//chunkTransformComponent->RotateY(0.0001f);
+
+		grassPlane.Update();
+		chunk1.Update();
+		chunk2.Update();
+		 
 		// Display Game
 		ImGui::Render();
 		glClearColor(0.0f, 0.3f, 0.5f, 1.0f);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
 
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
@@ -150,8 +162,10 @@ void Game::Run()
 		model = glm::rotate(model, glm::radians(20.0f), glm::vec3(1.0f, 0.3f, 0.5f));
 		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
 
-		chunk.Draw(model, view, perspective);
-		//mesh.Draw(model, view, perspective);
+		chunk1.Draw(view, perspective);
+		chunk2.Draw(view, perspective);
+		MeshComponent* planeMeshComponent = static_cast<MeshComponent*>(grassPlane.GetComponentByName("mesh"));
+		planeMeshComponent->Draw(planeTransformComponent->GetModel(), view, perspective);
 
 		glfwSwapBuffers(window);
 
@@ -171,7 +185,9 @@ Game::~Game()
 
 void ResizeViewportCallback(GLFWwindow* window, int width, int height)
 {
-	glViewport(0, 0, width, height);
+	if (width > 0 && height > 0) {
+		glViewport(0, 0, width, height);
+	}
 }
 
 DebugInfo::DebugInfo()

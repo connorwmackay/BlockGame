@@ -103,7 +103,7 @@ void Mesh::AddFace(std::vector<Vertex> vertices)
 		}
 
 		if (!wasFound)
-			LOG("Couldn't find vertex point: (%f, %f, %f)\n", vertex.x, vertex.y, vertex.z);
+			LOG("Couldn't find vertex point: (%f, %f, %f, %f, %f)\n", vertex.x, vertex.y, vertex.z, vertex.s, vertex.t);
 	}
 
 	shouldUpdateOnGPU = true;

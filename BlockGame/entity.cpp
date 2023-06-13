@@ -2,10 +2,12 @@
 
 #include <memory>
 
+#include "logging.h"
+
 Entity::Entity()
 {
 	id_ = Entity::NewId();
-	components_ = std::vector<std::unique_ptr<Component>>();
+	components_ = std::unordered_map<std::string, Component*>();
 }
 
 void Entity::Start()
@@ -15,16 +17,19 @@ void Entity::Start()
 
 void Entity::Update()
 {
-	for (int i=0; i < components_.size(); i++)
+	for (auto componentPair : components_)
 	{
-		std::unique_ptr<Component> component = std::move(components_[i]);
+		Component* component = componentPair.second;
 
 		if (component) {
 			component->Update();
 		}
-
-		components_[i] = std::move(component);
 	}
+}
+
+uint32_t const& Entity::GetId()
+{
+	return id_;
 }
 
 uint32_t Entity::NewId()
@@ -33,10 +38,25 @@ uint32_t Entity::NewId()
 	return currentId++;
 }
 
-void Entity::AddComponent(std::unique_ptr<Component> component)
+void Entity::AddComponent(std::string name, Component* component)
 {
 	if (component) {
 		component->Start();
-		components_.push_back(std::move(component));
+		components_.insert(std::make_pair(name, component));
+	} else {
+		LOG("Cannot add component to entity %d since it refers to a null pointer.\n", id_);
 	}
+}
+
+Component* Entity::GetComponentByName(std::string name)
+{
+	Component* component = components_.at(name);
+
+	if (component)
+	{
+		return component;
+	}
+
+	LOG("Component %s either doesn't exist or was a nullptr\n", name.c_str());
+	return nullptr;
 }

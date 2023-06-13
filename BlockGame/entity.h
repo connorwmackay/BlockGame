@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "component.h"
@@ -8,7 +10,7 @@
 class Entity
 {
 	uint32_t id_;
-	std::vector<std::unique_ptr<Component>> components_;
+	std::unordered_map<std::string, Component*> components_;
 protected:
 public:
 	Entity();
@@ -25,7 +27,10 @@ public:
 	 */
 	virtual void Update();
 
-	void AddComponent(std::unique_ptr<Component> component);
+	void AddComponent(std::string name, Component* component);
+	Component* GetComponentByName(std::string name);
+
+	uint32_t const& GetId();
 
 	static uint32_t NewId();
 };
