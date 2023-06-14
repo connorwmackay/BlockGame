@@ -8,6 +8,7 @@ class CameraComponent : public Component
 {
 public:
 	CameraComponent();
+	CameraComponent(Entity* owner);
 
 	glm::mat4 GetView(TransformComponent* transformComponent);
 };

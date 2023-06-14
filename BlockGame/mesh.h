@@ -56,7 +56,14 @@ public:
 	int GetNumVertices();
 
 	/*
+	 * Set the matrices
+	 */
+	void SetModel(glm::mat4 const& model);
+	void SetView(glm::mat4 const& view);
+	void SetProjection(glm::mat4 const& projection);
+
+	/*
 	 * Draws the mesh to the screen.
 	 */
-	void Draw(glm::mat4 const& model, glm::mat4 const& view, glm::mat4 const& projection);
+	void Draw();
 };

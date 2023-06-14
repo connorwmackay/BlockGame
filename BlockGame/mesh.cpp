@@ -127,7 +127,28 @@ int Mesh::GetNumVertices()
 	return vertices_.size();
 }
 
-void Mesh::Draw(glm::mat4 const& model, glm::mat4 const& view, glm::mat4 const& projection)
+void Mesh::SetModel(glm::mat4 const& model)
+{
+	glUseProgram(shaderProgram);
+	unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model");
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+}
+
+void Mesh::SetView(glm::mat4 const& view)
+{
+	glUseProgram(shaderProgram);
+	unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+}
+
+void Mesh::SetProjection(glm::mat4 const& projection)
+{
+	glUseProgram(shaderProgram);
+	unsigned int projectionlLoc = glGetUniformLocation(shaderProgram, "projection");
+	glUniformMatrix4fv(projectionlLoc, 1, GL_FALSE, glm::value_ptr(projection));
+}
+
+void Mesh::Draw()
 {
 	texture_->Bind(GL_TEXTURE0);
 
@@ -144,17 +165,7 @@ void Mesh::Draw(glm::mat4 const& model, glm::mat4 const& view, glm::mat4 const& 
 	}
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
-
 	glUseProgram(shaderProgram);
-
-	unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model");
-	unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
-	unsigned int projectionlLoc = glGetUniformLocation(shaderProgram, "projection");
-
-	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
-	glUniformMatrix4fv(projectionlLoc, 1, GL_FALSE, glm::value_ptr(projection));
-
 	glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, nullptr);
 
 	texture_->Unbind(GL_TEXTURE0);

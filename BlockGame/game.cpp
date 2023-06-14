@@ -69,6 +69,10 @@ Game::Game()
 
 void Game::Run()
 {
+	glClearColor(0.0f, 0.3f, 0.5f, 1.0f);
+	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+	glfwSwapBuffers(window);
+
 	debugInfo = DebugInfo();
 
 	float start = -1.0f;
@@ -76,31 +80,16 @@ void Game::Run()
 
 	stbi_set_flip_vertically_on_load(false);
 
-	TextureData textureData = Texture::LoadTextureDataFromFile("./Assets/textureAtlas.png");
-	Texture2D* meshTexture = new Texture2D(textureData, GL_TEXTURE_2D, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST);
-	Texture::FreeTextureData(textureData);
-
-	TextureAtlas textureAtlas = { 3, 6 };
-	SubTexture grassSubTexture = GetSubTextureFromTextureAtlas(0, 2, textureAtlas);
-
-	Mesh mesh = Mesh(meshTexture);
-	mesh.AddVertex({ start, start, end, grassSubTexture.startS, grassSubTexture.startT }, true);
-	mesh.AddVertex({ end, start, end, grassSubTexture.endS, grassSubTexture.startT }, true);
-	mesh.AddVertex({ start, end, end, grassSubTexture.startS, grassSubTexture.endT }, true);
-	mesh.AddVertex({ end, end, end, grassSubTexture.endS, grassSubTexture.endT }, true);
-	mesh.AddFace({
-		{ start, start, end, grassSubTexture.startS, grassSubTexture.startT },
-        {end, start, end, grassSubTexture.endS, grassSubTexture.startT },
-		{ start, end, end, grassSubTexture.startS, grassSubTexture.endT },
-		{ start, end, end, grassSubTexture.startS, grassSubTexture.endT },
-        { end, end, end, grassSubTexture.endS, grassSubTexture.endT },
-		{end, start, end, grassSubTexture.endS, grassSubTexture.startT}
-	});
-
 	auto fastNoiseSimplex = FastNoise::New<FastNoise::Simplex>();
 
 	srand(time(NULL));
 	int seed = rand();
+
+	glm::mat4 perspective = glm::mat4(1.0f);
+
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+	perspective = glm::perspective(glm::radians(60.0f), (GLfloat)((float)width / (float)height), 0.1f, 200.0f);
 
 	std::vector<Chunk> world = std::vector<Chunk>();
 
@@ -115,28 +104,17 @@ void Game::Run()
 	double afterWorldCreation = glfwGetTime();
 	LOG("World Creation Time: %f seconds", (afterWorldCreation - beforeWorldCreation));
 
-	Entity grassPlane = Entity();
-	grassPlane.AddComponent("mesh", new MeshComponent(mesh));
-	grassPlane.AddComponent("transform", new TransformComponent(
-		glm::vec3(10.0f, 6.0f, 10.0f),
-		glm::vec3(0.0f, 0.0f, 0.0f),
-		glm::vec3(8.0f, 8.0f, 1.0f)
-	));
-
-	grassPlane.Start();
+	glm::mat4 oldView = glm::mat4(1.0f);
 	for (auto& chunk : world)
 	{
 		chunk.Start();
+		MeshComponent* meshComponent = static_cast<MeshComponent*>(chunk.GetComponentByName("mesh"));
+		meshComponent->SetProjection(perspective);
+		meshComponent->SetView(oldView);
 	}
 
 	FreeFormController freeFormController = FreeFormController(window, glm::vec3(0.0f, 18.0f, -32.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	freeFormController.Start();
-
-	glm::mat4 perspective = glm::mat4(1.0f);
-
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
-	perspective = glm::perspective(glm::radians(60.0f), (GLfloat)((float)width / (float)height), 0.1f, 200.0f);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -157,11 +135,6 @@ void Game::Run()
 
 		debugInfo.Display();
 
-		TransformComponent* planeTransformComponent = static_cast<TransformComponent*>(grassPlane.GetComponentByName("transform"));
-
-		grassPlane.Update();
-
-		float beforeWorldUpdate = glfwGetTime();
 		for (auto& chunk : world)
 		{
 			chunk.Update();
@@ -179,13 +152,22 @@ void Game::Run()
 		TransformComponent* transformComponent = static_cast<TransformComponent*>(freeFormController.GetComponentByName("transform"));
 		glm::mat4 view = cameraComponent->GetView(transformComponent);
 
-		for (auto& chunk : world)
+		bool shouldUpdateViews = false;
+		if (view != oldView)
 		{
-			chunk.Draw(view, perspective);
+			shouldUpdateViews = true;
 		}
 
-		MeshComponent* planeMeshComponent = static_cast<MeshComponent*>(grassPlane.GetComponentByName("mesh"));
-		planeMeshComponent->Draw(planeTransformComponent->GetModel(), view, perspective);
+		for (auto& chunk : world)
+		{
+			if (shouldUpdateViews)
+			{
+				MeshComponent* chunkMeshComponent = static_cast<MeshComponent*>(chunk.GetComponentByName("mesh"));
+				chunkMeshComponent->SetView(view);
+			}
+
+			chunk.Draw();
+		}
 
 		// Display Game
 		ImGui::Render();
@@ -194,6 +176,8 @@ void Game::Run()
 		glfwSwapBuffers(window);
 
 		debugInfo.EndFrame();
+
+		oldView = view;
 	}
 }
 

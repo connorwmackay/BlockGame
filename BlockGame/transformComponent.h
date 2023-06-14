@@ -7,9 +7,11 @@ class TransformComponent : public Component
 	glm::vec3 translation_;
 	glm::vec3 rotation_;
 	glm::vec3 scale_;
+
+	bool hasChanged_;
 public:
 	TransformComponent();
-	TransformComponent(glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale);
+	TransformComponent(Entity* owner, glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale);
 
 	void SetTranslation(glm::vec3 const& translation);
 	void SetRotation(glm::vec3 const& rotation);
@@ -28,4 +30,7 @@ public:
 	glm::vec3 GetRightVector();
 
 	glm::mat4 GetModel();
+
+	void SetHasChanged(bool hasChanged);
+	bool GetHasChanged();
 };

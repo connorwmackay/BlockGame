@@ -2,28 +2,37 @@
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
+#include "entity.h"
+#include "logging.h"
+#include "meshComponent.h"
+
 TransformComponent::TransformComponent()
 {}
 
-TransformComponent::TransformComponent(glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale)
+TransformComponent::TransformComponent(Entity* owner, glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale)
+	:Component(owner)
 {
 	SetTranslation(translation);
 	SetRotation(rotation);
 	SetScale(scale);
+	hasChanged_ = false;
 }
 
 void TransformComponent::SetTranslation(glm::vec3 const& translation)
 {
+	SetHasChanged(true);
 	translation_ = translation;
 }
 
 void TransformComponent::SetRotation(glm::vec3 const& rotation)
 {
+	SetHasChanged(true);
 	rotation_ = rotation;
 }
 
 void TransformComponent::SetScale(glm::vec3 const& scale)
 {
+	SetHasChanged(true);
 	scale_ = scale;
 }
 
@@ -44,16 +53,19 @@ glm::vec3 TransformComponent::GetScale()
 
 void TransformComponent::RotateX(float value)
 {
+	SetHasChanged(true);
 	rotation_.x += value;
 }
 
 void TransformComponent::RotateY(float value)
 {
+	SetHasChanged(true);
 	rotation_.y += value;
 }
 
 void TransformComponent::RotateZ(float value)
 {
+	SetHasChanged(true);
 	rotation_.z += value;
 }
 
@@ -96,4 +108,14 @@ glm::mat4 TransformComponent::GetModel()
 	model = glm::scale(model, scale_);
 
 	return model;
+}
+
+void TransformComponent::SetHasChanged(bool hasChanged)
+{
+	hasChanged_ = hasChanged;
+}
+
+bool TransformComponent::GetHasChanged()
+{
+	return hasChanged_;
 }

@@ -9,9 +9,14 @@ protected:
 	Mesh mesh_;
 public:
 	MeshComponent();
-	MeshComponent(Mesh& mesh);
+	MeshComponent(Entity* owner, Mesh& mesh);
 
 	void SetMesh(Mesh& mesh);
 
-	void Draw(glm::mat4 const& model, glm::mat4 const& view, glm::mat4 const& projection);
+	void Draw();
+	void SetModel(glm::mat4 const& model);
+	void SetView(glm::mat4 const& view);
+	void SetProjection(glm::mat4 const& projection);
+
+	void Start() override;
 };

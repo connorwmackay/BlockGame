@@ -13,7 +13,7 @@ Chunk::Chunk(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator, glm::vec3 
 	blocks_ = std::vector<std::vector<std::vector<uint8_t>>>();
 	seed_ = seed;
 
-	AddComponent("transform", new TransformComponent(startingPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
+	AddComponent("transform", new TransformComponent(this, startingPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
 	transformComponent = static_cast<TransformComponent*>(GetComponentByName("transform"));
 	UseNoise(noiseGenerator);
 	GenerateMesh();
@@ -282,8 +282,9 @@ void Chunk::GenerateMesh()
 		}
 	}
 
-	AddComponent("mesh", new MeshComponent(mesh));
+	AddComponent("mesh", new MeshComponent(this, mesh));
 	meshComponent = static_cast<MeshComponent*>(GetComponentByName("mesh"));
+	meshComponent->SetModel(transformComponent->GetModel());
 }
 
 bool Chunk::IsInChunk(int x, int y, int z)
@@ -326,9 +327,18 @@ bool Chunk::IsInChunk(int x, int y, int z)
 	return false;
 }
 
-void Chunk::Draw(glm::mat4 const& view, glm::mat4 const& projection)
+void Chunk::Update()
 {
-	meshComponent->Draw(transformComponent->GetModel(), view, projection);
+	if (transformComponent->GetHasChanged())
+	{
+		meshComponent->SetModel(transformComponent->GetModel());
+		transformComponent->SetHasChanged(false);
+	}
+}
+
+void Chunk::Draw()
+{
+	meshComponent->Draw();
 }
 
 void Chunk::UseNoise(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator)

@@ -5,6 +5,11 @@
 CameraComponent::CameraComponent()
 {}
 
+CameraComponent::CameraComponent(Entity* owner)
+	: Component(owner)
+{}
+
+
 glm::mat4 CameraComponent::GetView(TransformComponent* transformComponent)
 {
 	glm::mat4 view = glm::lookAt(

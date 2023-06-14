@@ -5,8 +5,8 @@
 
 FreeFormController::FreeFormController(GLFWwindow* window, glm::vec3 position, glm::vec3 rotation)
 {
-	AddComponent("transform", new TransformComponent(position, rotation, glm::vec3(1.0f, 1.0f, 1.0f)));
-	AddComponent("camera", new CameraComponent());
+	AddComponent("transform", new TransformComponent(this, position, rotation, glm::vec3(1.0f, 1.0f, 1.0f)));
+	AddComponent("camera", new CameraComponent(this));
 
 	cameraComponent_ = static_cast<CameraComponent*>(GetComponentByName("camera"));
 	transformComponent_ = static_cast<TransformComponent*>(GetComponentByName("transform"));

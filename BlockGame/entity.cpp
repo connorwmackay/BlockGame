@@ -50,11 +50,13 @@ void Entity::AddComponent(std::string name, Component* component)
 
 Component* Entity::GetComponentByName(std::string name)
 {
-	Component* component = components_.at(name);
+	if (components_.find(name) != components_.end()) {
+		Component* component = components_.at(name);
 
-	if (component)
-	{
-		return component;
+		if (component)
+		{
+			return component;
+		}
 	}
 
 	LOG("Component %s either doesn't exist or was a nullptr\n", name.c_str());

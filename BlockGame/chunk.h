@@ -35,5 +35,7 @@ protected:
 	bool IsInChunk(int x, int y, int z);
 public:
 	Chunk(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator, glm::vec3 startingPosition, int size, int seed);
-	void Draw(glm::mat4 const& view, glm::mat4 const& projection);
+	void Draw();
+
+	void Update() override;
 };
