@@ -9,6 +9,7 @@
 #include "mesh.h"
 #include "chunk.h"
 #include "entity.h"
+#include "freeFormController.h"
 #include "meshComponent.h"
 #include "transformComponent.h"
 
@@ -39,6 +40,8 @@ Game::Game()
 	window = glfwCreateWindow(1280, 720, "Block Game", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(0);
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
@@ -113,6 +116,9 @@ void Game::Run()
 	chunk1.Start();
 	chunk2.Start();
 
+	FreeFormController freeFormController = FreeFormController(window, glm::vec3(0.0f, 18.0f, -32.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	freeFormController.Start();
+
 	while (!glfwWindowShouldClose(window))
 	{
 		debugInfo.StartFrame();
@@ -140,12 +146,13 @@ void Game::Run()
 		grassPlane.Update();
 		chunk1.Update();
 		chunk2.Update();
-		 
-		// Display Game
-		ImGui::Render();
+		freeFormController.Update();
+
+		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+			glfwSetWindowShouldClose(window, GLFW_TRUE);
+		}
 		glClearColor(0.0f, 0.3f, 0.5f, 1.0f);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
@@ -153,9 +160,11 @@ void Game::Run()
 		glm::mat4 perspective = glm::mat4(1.0f);
 		perspective = glm::perspective(glm::radians(60.0f), (GLfloat)((float)width / (float)height), 0.1f, 200.0f);
 
-		glm::vec3 cameraTranslation = glm::vec3(0.0f, 0.0f, -5.0f);
+		//glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 18.0f, -32), glm::vec3(8.0f, 8.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
-		glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 18.0f, -32), glm::vec3(8.0f, 8.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		CameraComponent* cameraComponent = static_cast<CameraComponent*>(freeFormController.GetComponentByName("camera"));
+		TransformComponent* transformComponent = static_cast<TransformComponent*>(freeFormController.GetComponentByName("transform"));
+		glm::mat4 view = cameraComponent->GetView(transformComponent);
 
 		glm::mat4 model = glm::mat4(1.0f);
 		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
@@ -166,6 +175,10 @@ void Game::Run()
 		chunk2.Draw(view, perspective);
 		MeshComponent* planeMeshComponent = static_cast<MeshComponent*>(grassPlane.GetComponentByName("mesh"));
 		planeMeshComponent->Draw(planeTransformComponent->GetModel(), view, perspective);
+
+		// Display Game
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);
 

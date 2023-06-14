@@ -72,6 +72,7 @@ glm::vec3 TransformComponent::GetRightVector()
 	right.x = glm::cos(rotation_.x);
 	right.y = 0.0f;
 	right.z = -glm::sin(rotation_.x);
+
 	return right;
 }
 

@@ -147,9 +147,11 @@
     <ClCompile Include="..\Libraries\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Libraries\imgui\imgui_widgets.cpp" />
     <ClCompile Include="..\Libraries\stb\stb_image.c" />
+    <ClCompile Include="cameraComponent.cpp" />
     <ClCompile Include="chunk.cpp" />
     <ClCompile Include="component.cpp" />
     <ClCompile Include="entity.cpp" />
+    <ClCompile Include="freeFormController.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
@@ -159,9 +161,11 @@
     <ClCompile Include="transformComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cameraComponent.h" />
     <ClInclude Include="chunk.h" />
     <ClInclude Include="component.h" />
     <ClInclude Include="entity.h" />
+    <ClInclude Include="freeFormController.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="logging.h" />
     <ClInclude Include="mesh.h" />
