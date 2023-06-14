@@ -7,6 +7,8 @@
 
 #include "entity.h"
 #include "mesh.h"
+#include "transformComponent.h"
+#include "meshComponent.h"
 
 #define BLOCK_TYPE_AIR 0
 #define BLOCK_TYPE_GRASS 1
@@ -23,6 +25,9 @@ class Chunk : public Entity
 
 	// The blocks in the chunk (ordered z, then x, then y).
 	std::vector<std::vector<std::vector<uint8_t>>> blocks_;
+
+	MeshComponent* meshComponent;
+	TransformComponent* transformComponent;
 protected:
 	void UseNoise(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator);
 	void GenerateMesh();
@@ -30,5 +35,5 @@ protected:
 	bool IsInChunk(int x, int y, int z);
 public:
 	Chunk(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator, glm::vec3 startingPosition, int size, int seed);
-	void Draw(glm::mat4 view, glm::mat4 projection);
+	void Draw(glm::mat4 const& view, glm::mat4 const& projection);
 };

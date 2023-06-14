@@ -39,9 +39,10 @@ public:
 	~Mesh();
 
 	/*
-	 * Adds a unique vertex point to the mesh
+	 * Adds a vertex point to the mesh
 	 */
-	void AddVertex(const Vertex& vertex);
+	void AddVertex(Vertex vertex, bool onlyAddUnique = false);
+	void AddVertices(std::vector<Vertex> vertices);
 
 	/*
 	 * Finds the index of each specified vertex point,
@@ -50,9 +51,12 @@ public:
 	 * two of these triangles.
 	 */
 	void AddFace(std::vector<Vertex> vertices);
+	void AddFace(std::vector<unsigned int> indices);
+
+	int GetNumVertices();
 
 	/*
 	 * Draws the mesh to the screen.
 	 */
-	void Draw(glm::mat4 model, glm::mat4 view, glm::mat4 projection);
+	void Draw(glm::mat4 const& model, glm::mat4 const& view, glm::mat4 const& projection);
 };

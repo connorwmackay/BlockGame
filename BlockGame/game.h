@@ -17,7 +17,10 @@ struct DebugInfo
 	double fpsAverage;
 	double fpsMin;
 
+	double averageFrameTime;
+
 	std::vector<double> fpsCounts;
+	std::vector<double> frameTimes;
 
 	int glMajorVersion;
 	int glMinorVersion;

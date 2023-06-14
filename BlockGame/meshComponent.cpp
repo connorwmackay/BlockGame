@@ -13,7 +13,7 @@ void MeshComponent::SetMesh(Mesh& mesh)
 	mesh_ = mesh;
 }
 
-void MeshComponent::Draw(glm::mat4 model, glm::mat4 view, glm::mat4 projection)
+void MeshComponent::Draw(glm::mat4 const& model, glm::mat4 const& view, glm::mat4 const& projection)
 {
 	mesh_.Draw(model, view, projection);
 }

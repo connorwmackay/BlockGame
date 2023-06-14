@@ -1,5 +1,7 @@
 #include "chunk.h"
 
+#include <GLFW/glfw3.h>
+
 #include "logging.h"
 #include "meshComponent.h"
 #include "transformComponent.h"
@@ -12,6 +14,7 @@ Chunk::Chunk(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator, glm::vec3 
 	seed_ = seed;
 
 	AddComponent("transform", new TransformComponent(startingPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
+	transformComponent = static_cast<TransformComponent*>(GetComponentByName("transform"));
 	UseNoise(noiseGenerator);
 	GenerateMesh();
 }
@@ -31,6 +34,13 @@ void Chunk::GenerateMesh()
 	TextureAtlas textureAtlas = { 3, 6 };
 
 	int numBlocksRendered = 0;
+
+	std::vector<Vertex> faceVertices = std::vector<Vertex>();
+	faceVertices.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
+	faceVertices.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
+	faceVertices.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
+	faceVertices.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
+
 	for (int z = 0; z < size_; z++)
 	{
 		for (int x = 0; x < size_; x++)
@@ -44,6 +54,7 @@ void Chunk::GenerateMesh()
 					numBlocksRendered++;
 
 					// Get the adjacent blocks
+
 					uint8_t adjacentBlockUp = BLOCK_TYPE_AIR;
 					if (IsInChunk(x, y + 1, z)) {
 						adjacentBlockUp = blocks_[z][x][y+1];
@@ -105,25 +116,26 @@ void Chunk::GenerateMesh()
 
 						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
 
-						std::vector<Vertex> vertices = std::vector<Vertex>();
-						vertices.push_back({ meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, subTexture.startS, subTexture.endT }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
+						faceVertices[0] = { meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.startT }; // Bottom-Left
+						faceVertices[1] = { meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.startT }; // Bottom-Right
+						faceVertices[2] = { meshX,		meshY + 1,	meshZ - 1, subTexture.startS, subTexture.endT }; // Top-left
+						faceVertices[3] = { meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
 
-						mesh.AddVertex(vertices[0]);
-						mesh.AddVertex(vertices[1]);
-						mesh.AddVertex(vertices[2]);
-						mesh.AddVertex(vertices[3]);
+						mesh.AddVertex(faceVertices[0]);
+						mesh.AddVertex(faceVertices[1]);
+						mesh.AddVertex(faceVertices[2]);
+						mesh.AddVertex(faceVertices[3]);
+
+						unsigned int offsetStart = mesh.GetNumVertices() - 1;
 
 						mesh.AddFace({
-							vertices[0],
-							vertices[1],
-							vertices[2],
-							vertices[2],
-							vertices[3],
-							vertices[1]
-							});
+							offsetStart - 0,
+							offsetStart - 1,
+							offsetStart - 2,
+							offsetStart - 2,
+							offsetStart - 3,
+							offsetStart - 1
+						});
 					}
 
 					if (adjacentBlockDown == BLOCK_TYPE_AIR)
@@ -132,24 +144,25 @@ void Chunk::GenerateMesh()
 
 						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
 
-						std::vector<Vertex> vertices = std::vector<Vertex>();
-						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.endT }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
+						faceVertices[0] = { meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }; // Bottom-Left
+						faceVertices[1] = { meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }; // Bottom-Right
+						faceVertices[2] = { meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.endT }; // Top-left
+						faceVertices[3] = { meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
 
-						mesh.AddVertex(vertices[0]);
-						mesh.AddVertex(vertices[1]);
-						mesh.AddVertex(vertices[2]);
-						mesh.AddVertex(vertices[3]);
+						mesh.AddVertex(faceVertices[0]);
+						mesh.AddVertex(faceVertices[1]);
+						mesh.AddVertex(faceVertices[2]);
+						mesh.AddVertex(faceVertices[3]);
+
+						unsigned int offsetStart = mesh.GetNumVertices() - 1;
 
 						mesh.AddFace({
-							vertices[0],
-							vertices[1],
-							vertices[2],
-							vertices[2],
-							vertices[3],
-							vertices[1]
+							offsetStart - 0,
+							offsetStart - 1,
+							offsetStart - 2,
+							offsetStart - 2,
+							offsetStart - 3,
+							offsetStart - 1
 							});
 					}
 
@@ -159,24 +172,25 @@ void Chunk::GenerateMesh()
 
 						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
 
-						std::vector<Vertex> vertices = std::vector<Vertex>();
-						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, subTexture.startS, subTexture.endT }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
+						faceVertices[0] = { meshX + 1,	meshY,		meshZ, subTexture.startS, subTexture.startT }; // Bottom-Left
+						faceVertices[1] = { meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }; // Bottom-Right
+						faceVertices[2] = { meshX + 1,	meshY + 1,	meshZ, subTexture.startS, subTexture.endT }; // Top-left
+						faceVertices[3] = { meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
 
-						mesh.AddVertex(vertices[0]);
-						mesh.AddVertex(vertices[1]);
-						mesh.AddVertex(vertices[2]);
-						mesh.AddVertex(vertices[3]);
+						mesh.AddVertex(faceVertices[0]);
+						mesh.AddVertex(faceVertices[1]);
+						mesh.AddVertex(faceVertices[2]);
+						mesh.AddVertex(faceVertices[3]);
+
+						unsigned int offsetStart = mesh.GetNumVertices() - 1;
 
 						mesh.AddFace({
-							vertices[0],
-							vertices[1],
-							vertices[2],
-							vertices[2],
-							vertices[3],
-							vertices[1]
+							offsetStart - 0,
+							offsetStart - 1,
+							offsetStart - 2,
+							offsetStart - 2,
+							offsetStart - 3,
+							offsetStart - 1
 							});
 					}
 
@@ -186,25 +200,26 @@ void Chunk::GenerateMesh()
 
 						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
 
-						std::vector<Vertex> vertices = std::vector<Vertex>();
-						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
-						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.endT }); // Top-left
-						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
+						faceVertices[0] = { meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }; // Bottom-Left
+						faceVertices[1] = { meshX,		meshY,		meshZ - 1, subTexture.endS, subTexture.startT }; // Bottom-Right
+						faceVertices[2] = { meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.endT }; // Top-left
+						faceVertices[3] = { meshX,		meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
 
-						mesh.AddVertex(vertices[0]);
-						mesh.AddVertex(vertices[1]);
-						mesh.AddVertex(vertices[2]);
-						mesh.AddVertex(vertices[3]);
+						mesh.AddVertex(faceVertices[0]);
+						mesh.AddVertex(faceVertices[1]);
+						mesh.AddVertex(faceVertices[2]);
+						mesh.AddVertex(faceVertices[3]);
+
+						unsigned int offsetStart = mesh.GetNumVertices() - 1;
 
 						mesh.AddFace({
-							vertices[0],
-							vertices[1],
-							vertices[2],
-							vertices[2],
-							vertices[3],
-							vertices[1]
-						});
+							offsetStart - 0,
+							offsetStart - 1,
+							offsetStart - 2,
+							offsetStart - 2,
+							offsetStart - 3,
+							offsetStart - 1
+							});
 					}
 
 					if (adjacentBlockFront == BLOCK_TYPE_AIR)
@@ -213,25 +228,26 @@ void Chunk::GenerateMesh()
 
 						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
 
-						std::vector<Vertex> vertices = std::vector<Vertex>();
-						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.endT }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.endT }); // Top-Right
+						faceVertices[0] = { meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }; // Bottom-Left
+						faceVertices[1] = { meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }; // Bottom-Right
+						faceVertices[2] = { meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.endT }; // Top-left
+						faceVertices[3] = { meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.endT }; // Top-Right
 
-						mesh.AddVertex(vertices[0]);
-						mesh.AddVertex(vertices[1]);
-						mesh.AddVertex(vertices[2]);
-						mesh.AddVertex(vertices[3]);
+						mesh.AddVertex(faceVertices[0]);
+						mesh.AddVertex(faceVertices[1]);
+						mesh.AddVertex(faceVertices[2]);
+						mesh.AddVertex(faceVertices[3]);
+
+						unsigned int offsetStart = mesh.GetNumVertices() - 1;
 
 						mesh.AddFace({
-							vertices[0],
-							vertices[1],
-							vertices[2],
-							vertices[2],
-							vertices[3],
-							vertices[1]
-						});
+							offsetStart - 0,
+							offsetStart - 1,
+							offsetStart - 2,
+							offsetStart - 2,
+							offsetStart - 3,
+							offsetStart - 1
+							});
 					}
 
 					if (adjacentBlockBack == BLOCK_TYPE_AIR)
@@ -240,24 +256,25 @@ void Chunk::GenerateMesh()
 
 						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
 
-						std::vector<Vertex> vertices = std::vector<Vertex>();
-						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.startT }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, subTexture.startS, subTexture.endT }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
+						faceVertices[0] = { meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.startT }; // Bottom-Left
+						faceVertices[1] = { meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }; // Bottom-Right
+						faceVertices[2] = { meshX,		meshY + 1,	meshZ - 1, subTexture.startS, subTexture.endT }; // Top-left
+						faceVertices[3] = { meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
 
-						mesh.AddVertex(vertices[0]);
-						mesh.AddVertex(vertices[1]);
-						mesh.AddVertex(vertices[2]);
-						mesh.AddVertex(vertices[3]);
+						mesh.AddVertex(faceVertices[0]);
+						mesh.AddVertex(faceVertices[1]);
+						mesh.AddVertex(faceVertices[2]);
+						mesh.AddVertex(faceVertices[3]);
+
+						unsigned int offsetStart = mesh.GetNumVertices() - 1;
 
 						mesh.AddFace({
-							vertices[0],
-							vertices[1],
-							vertices[2],
-							vertices[2],
-							vertices[3],
-							vertices[1]
+							offsetStart - 0,
+							offsetStart - 1,
+							offsetStart - 2,
+							offsetStart - 2,
+							offsetStart - 3,
+							offsetStart - 1
 						});
 					}
 				}
@@ -266,6 +283,7 @@ void Chunk::GenerateMesh()
 	}
 
 	AddComponent("mesh", new MeshComponent(mesh));
+	meshComponent = static_cast<MeshComponent*>(GetComponentByName("mesh"));
 }
 
 bool Chunk::IsInChunk(int x, int y, int z)
@@ -308,11 +326,8 @@ bool Chunk::IsInChunk(int x, int y, int z)
 	return false;
 }
 
-void Chunk::Draw(glm::mat4 view, glm::mat4 projection)
+void Chunk::Draw(glm::mat4 const& view, glm::mat4 const& projection)
 {
-	MeshComponent* meshComponent = static_cast<MeshComponent*>(GetComponentByName("mesh"));
-	TransformComponent* transformComponent = static_cast<TransformComponent*>(GetComponentByName("transform"));
-
 	meshComponent->Draw(transformComponent->GetModel(), view, projection);
 }
 
@@ -332,6 +347,7 @@ void Chunk::UseNoise(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator)
 		seed_
 	);
 
+	float beforeSettingBlocks = glfwGetTime();
 	int currentBlockIndex = 0;
 	int currentNoiseIndex = 0;
 	for (int z = 0; z < size_; z++)

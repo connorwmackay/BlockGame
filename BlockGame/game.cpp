@@ -84,10 +84,10 @@ void Game::Run()
 	SubTexture grassSubTexture = GetSubTextureFromTextureAtlas(0, 2, textureAtlas);
 
 	Mesh mesh = Mesh(meshTexture);
-	mesh.AddVertex({ start, start, end, grassSubTexture.startS, grassSubTexture.startT });
-	mesh.AddVertex({ end, start, end, grassSubTexture.endS, grassSubTexture.startT });
-	mesh.AddVertex({ start, end, end, grassSubTexture.startS, grassSubTexture.endT });
-	mesh.AddVertex({ end, end, end, grassSubTexture.endS, grassSubTexture.endT });
+	mesh.AddVertex({ start, start, end, grassSubTexture.startS, grassSubTexture.startT }, true);
+	mesh.AddVertex({ end, start, end, grassSubTexture.endS, grassSubTexture.startT }, true);
+	mesh.AddVertex({ start, end, end, grassSubTexture.startS, grassSubTexture.endT }, true);
+	mesh.AddVertex({ end, end, end, grassSubTexture.endS, grassSubTexture.endT }, true);
 	mesh.AddFace({
 		{ start, start, end, grassSubTexture.startS, grassSubTexture.startT },
         {end, start, end, grassSubTexture.endS, grassSubTexture.startT },
@@ -101,8 +101,19 @@ void Game::Run()
 
 	srand(time(NULL));
 	int seed = rand();
-	Chunk chunk1 = Chunk(fastNoiseSimplex, glm::vec3(0.0f, 0.0f, 0.0f), 16, seed);
-	Chunk chunk2 = Chunk(fastNoiseSimplex, glm::vec3(16.0f, 0.0f, 0.0f), 16, seed);
+
+	std::vector<Chunk> world = std::vector<Chunk>();
+
+	double beforeWorldCreation = glfwGetTime();
+	for (int z=0; z < 11; z++)
+	{
+		for (int x=0; x < 11; x++)
+		{
+			world.push_back(Chunk(fastNoiseSimplex, glm::vec3(x * 16.0f, 0.0f, z * 16.0f), 16, seed));
+		}
+	}
+	double afterWorldCreation = glfwGetTime();
+	LOG("World Creation Time: %f seconds", (afterWorldCreation - beforeWorldCreation));
 
 	Entity grassPlane = Entity();
 	grassPlane.AddComponent("mesh", new MeshComponent(mesh));
@@ -113,11 +124,19 @@ void Game::Run()
 	));
 
 	grassPlane.Start();
-	chunk1.Start();
-	chunk2.Start();
+	for (auto& chunk : world)
+	{
+		chunk.Start();
+	}
 
 	FreeFormController freeFormController = FreeFormController(window, glm::vec3(0.0f, 18.0f, -32.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	freeFormController.Start();
+
+	glm::mat4 perspective = glm::mat4(1.0f);
+
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+	perspective = glm::perspective(glm::radians(60.0f), (GLfloat)((float)width / (float)height), 0.1f, 200.0f);
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -140,12 +159,14 @@ void Game::Run()
 
 		TransformComponent* planeTransformComponent = static_cast<TransformComponent*>(grassPlane.GetComponentByName("transform"));
 
-		//TransformComponent* chunkTransformComponent = static_cast<TransformComponent*>(chunk.GetComponentByName("transform"));
-		//chunkTransformComponent->RotateY(0.0001f);
-
 		grassPlane.Update();
-		chunk1.Update();
-		chunk2.Update();
+
+		float beforeWorldUpdate = glfwGetTime();
+		for (auto& chunk : world)
+		{
+			chunk.Update();
+		} 
+
 		freeFormController.Update();
 
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
@@ -154,25 +175,15 @@ void Game::Run()
 		glClearColor(0.0f, 0.3f, 0.5f, 1.0f);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-		int width, height;
-		glfwGetWindowSize(window, &width, &height);
-
-		glm::mat4 perspective = glm::mat4(1.0f);
-		perspective = glm::perspective(glm::radians(60.0f), (GLfloat)((float)width / (float)height), 0.1f, 200.0f);
-
-		//glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 18.0f, -32), glm::vec3(8.0f, 8.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
 		CameraComponent* cameraComponent = static_cast<CameraComponent*>(freeFormController.GetComponentByName("camera"));
 		TransformComponent* transformComponent = static_cast<TransformComponent*>(freeFormController.GetComponentByName("transform"));
 		glm::mat4 view = cameraComponent->GetView(transformComponent);
 
-		glm::mat4 model = glm::mat4(1.0f);
-		model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-		model = glm::rotate(model, glm::radians(20.0f), glm::vec3(1.0f, 0.3f, 0.5f));
-		model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));
+		for (auto& chunk : world)
+		{
+			chunk.Draw(view, perspective);
+		}
 
-		chunk1.Draw(view, perspective);
-		chunk2.Draw(view, perspective);
 		MeshComponent* planeMeshComponent = static_cast<MeshComponent*>(grassPlane.GetComponentByName("mesh"));
 		planeMeshComponent->Draw(planeTransformComponent->GetModel(), view, perspective);
 
@@ -206,6 +217,7 @@ void ResizeViewportCallback(GLFWwindow* window, int width, int height)
 DebugInfo::DebugInfo()
 {
 	fpsCounts = std::vector<double>();
+	frameTimes = std::vector<double>();
 	startSecondTime = glfwGetTime();
 	fpsMax = 0.0f;
 	fpsAverage = 0.0f;
@@ -213,6 +225,7 @@ DebugInfo::DebugInfo()
 	swapInterval = 0;
 	glMajorVersion = -1;
 	glMinorVersion = -1;
+	averageFrameTime = 0.0f;
 }
 
 void DebugInfo::StartFrame()
@@ -230,6 +243,7 @@ void DebugInfo::EndFrame()
 {
 	endFrameTime = glfwGetTime();
 	double timeDifference = endFrameTime - startFrameTime;
+	frameTimes.push_back(endFrameTime - startFrameTime);
 	fpsCounts.push_back(1 / timeDifference);
 
 	if ((endFrameTime - startSecondTime) >= 0.1f)
@@ -252,8 +266,15 @@ void DebugInfo::EndFrame()
 			}
 		}
 
+		for (double frameTime : frameTimes)
+		{
+			averageFrameTime += frameTime;
+		}
+
 		fpsAverage /= fpsCounts.size();
+		averageFrameTime /= frameTimes.size();
 		fpsCounts.clear();
+		frameTimes.clear();
 	}
 }
 
@@ -265,8 +286,9 @@ void DebugInfo::Display()
 	glVersion << "OpenGL Version: " << glMajorVersion << "." << glMinorVersion;
 
 	std::stringstream fpsData;
-	fpsData << "FPS Max: " << fpsMax;
-	fpsData << "\nFPS Average: " << fpsAverage;
+	fpsData << "Frame Time Avg.: " << averageFrameTime * 1000.0f << "ms";
+	fpsData << "\nFPS Max: " << fpsMax;
+	fpsData << "\nFPS Avg.: " << fpsAverage;
 	fpsData << "\nFPS Min: " << fpsMin;
 
 	std::stringstream vsync;

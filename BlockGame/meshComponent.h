@@ -13,5 +13,5 @@ public:
 
 	void SetMesh(Mesh& mesh);
 
-	void Draw(glm::mat4 model, glm::mat4 view, glm::mat4 projection);
+	void Draw(glm::mat4 const& model, glm::mat4 const& view, glm::mat4 const& projection);
 };

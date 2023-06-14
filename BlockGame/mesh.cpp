@@ -1,4 +1,6 @@
 #include "mesh.h"
+
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -68,15 +70,17 @@ Mesh::~Mesh()
 	*/
 }
 
-void Mesh::AddVertex(const Vertex& vertex)
+void Mesh::AddVertex(Vertex vertex, bool onlyAddUnique)
 {
 	bool alreadyExists = false;
 
-	for (const auto& conVertex : vertices_)
-	{
-		if (conVertex == vertex)
+	if (onlyAddUnique) {
+		for (const auto& conVertex : vertices_)
 		{
-			alreadyExists = true;
+			if (conVertex == vertex)
+			{
+				alreadyExists = true;
+			}
 		}
 	}
 
@@ -86,6 +90,10 @@ void Mesh::AddVertex(const Vertex& vertex)
 	}
 }
 
+void Mesh::AddVertices(std::vector<Vertex> vertices)
+{
+	vertices_.insert(vertices_.end(), vertices.begin(), vertices.end());
+}
 
 void Mesh::AddFace(std::vector<Vertex> vertices)
 {
@@ -109,7 +117,17 @@ void Mesh::AddFace(std::vector<Vertex> vertices)
 	shouldUpdateOnGPU = true;
 }
 
-void Mesh::Draw(glm::mat4 model, glm::mat4 view, glm::mat4 projection)
+void Mesh::AddFace(std::vector<unsigned int> indices)
+{
+	indices_.insert(indices_.end(), indices.begin(), indices.end());
+}
+
+int Mesh::GetNumVertices()
+{
+	return vertices_.size();
+}
+
+void Mesh::Draw(glm::mat4 const& model, glm::mat4 const& view, glm::mat4 const& projection)
 {
 	texture_->Bind(GL_TEXTURE0);
 
@@ -117,10 +135,15 @@ void Mesh::Draw(glm::mat4 model, glm::mat4 view, glm::mat4 projection)
 
 	if (shouldUpdateOnGPU)
 	{
+		double beforeUpdate = glfwGetTime();
 		glNamedBufferData(vbo_, vertices_.size() * sizeof(Vertex), vertices_.data(), GL_DYNAMIC_DRAW);
 		glNamedBufferData(ebo_, indices_.size() * sizeof(unsigned int), indices_.data(), GL_DYNAMIC_DRAW);
+		double afterUpdate = glfwGetTime();
+
 		shouldUpdateOnGPU = false;
 	}
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
 
 	glUseProgram(shaderProgram);
 
@@ -132,7 +155,6 @@ void Mesh::Draw(glm::mat4 model, glm::mat4 view, glm::mat4 projection)
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 	glUniformMatrix4fv(projectionlLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
 	glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, nullptr);
 
 	texture_->Unbind(GL_TEXTURE0);

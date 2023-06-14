@@ -24,7 +24,6 @@ shader CreateShader(const char* vertexFile, const char* fragmentFile)
 
 	std::string vertexDataStdStr = vertexData.str();
 	const char* vertexDataStr = vertexDataStdStr.c_str();
-	LOG("Vertex Data: %s", vertexDataStr);
 
 	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexDataStr, NULL);
@@ -56,7 +55,6 @@ shader CreateShader(const char* vertexFile, const char* fragmentFile)
 
 	std::string fragmentDataStdStr = fragmentData.str();
 	const char* fragmentDataStr = fragmentDataStdStr.c_str();
-	LOG("Fragment Data: %s\n", fragmentDataStr);
 
 	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragmentShader, 1, &fragmentDataStr, NULL);
@@ -89,8 +87,6 @@ shader CreateShader(const char* vertexFile, const char* fragmentFile)
 	// Delete Vertex and Fragment Shaders
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
-
-	LOG("Is Program: %d", glIsProgram(newShader));
 	
 	// Return created shader
 	return newShader;

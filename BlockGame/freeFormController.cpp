@@ -12,8 +12,8 @@ FreeFormController::FreeFormController(GLFWwindow* window, glm::vec3 position, g
 	transformComponent_ = static_cast<TransformComponent*>(GetComponentByName("transform"));
 	window_ = window;
 
-	moveSpeed_ = 0.005f;
-	sensitivity_ = 0.025f;
+	moveSpeed_ = 0.05f;
+	sensitivity_ = 0.05f;
 }
 
 void FreeFormController::Start()
