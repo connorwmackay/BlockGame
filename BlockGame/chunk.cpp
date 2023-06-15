@@ -22,7 +22,7 @@ Chunk::Chunk(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator, glm::vec3 
 void Chunk::GenerateMesh()
 {
 	TextureData textureData = Texture::LoadTextureDataFromFile("./Assets/textureAtlas.png");
-	texture_ = new Texture2D(textureData, GL_TEXTURE_2D, GL_NEAREST_MIPMAP_NEAREST, GL_NEAREST);
+	texture_ = new Texture2D(textureData, GL_TEXTURE_2D, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST);
 	Texture::FreeTextureData(textureData);
 
 	Mesh mesh = Mesh(texture_);

@@ -89,7 +89,7 @@ void Game::Run()
 
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
-	perspective = glm::perspective(glm::radians(60.0f), (GLfloat)((float)width / (float)height), 0.1f, 200.0f);
+	perspective = glm::perspective(glm::radians(60.0f), (GLfloat)((float)width / (float)height), 0.1f, 400.0f);
 
 	std::vector<Chunk> world = std::vector<Chunk>();
 
