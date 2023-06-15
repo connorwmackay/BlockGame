@@ -18,5 +18,7 @@ public:
 	void SetView(glm::mat4 const& view);
 	void SetProjection(glm::mat4 const& projection);
 
+	Mesh* GetMesh();
+
 	void Start() override;
 };

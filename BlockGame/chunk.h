@@ -29,13 +29,16 @@ class Chunk : public Entity
 	MeshComponent* meshComponent;
 	TransformComponent* transformComponent;
 protected:
-	void UseNoise(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator);
+	void UseNoise(FastNoise::SmartNode<FastNoise::Simplex>& noiseGenerator);
 	void GenerateMesh();
 
 	bool IsInChunk(int x, int y, int z);
 public:
-	Chunk(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator, glm::vec3 startingPosition, int size, int seed);
+	Chunk(FastNoise::SmartNode<FastNoise::Simplex>& noiseGenerator, glm::vec3 startingPosition, int size, int seed);
 	void Draw();
+
+	void Unload();
+	void Recreate(FastNoise::SmartNode<FastNoise::Simplex>& noiseGenerator, glm::vec3 newStartingPosition, int seed);
 
 	void Update() override;
 };

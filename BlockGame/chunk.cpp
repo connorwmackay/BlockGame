@@ -6,7 +6,7 @@
 #include "meshComponent.h"
 #include "transformComponent.h"
 
-Chunk::Chunk(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator, glm::vec3 startingPosition, int size, int seed)
+Chunk::Chunk(FastNoise::SmartNode<FastNoise::Simplex>& noiseGenerator, glm::vec3 startingPosition, int size, int seed)
 	: Entity()
 {
 	size_ = size;
@@ -16,16 +16,22 @@ Chunk::Chunk(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator, glm::vec3 
 	AddComponent("transform", new TransformComponent(this, startingPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
 	transformComponent = static_cast<TransformComponent*>(GetComponentByName("transform"));
 	UseNoise(noiseGenerator);
-	GenerateMesh();
-}
 
-void Chunk::GenerateMesh()
-{
 	TextureData textureData = Texture::LoadTextureDataFromFile("./Assets/textureAtlas.png");
 	texture_ = new Texture2D(textureData, GL_TEXTURE_2D, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST);
 	Texture::FreeTextureData(textureData);
 
 	Mesh mesh = Mesh(texture_);
+
+	AddComponent("mesh", new MeshComponent(this, mesh));
+	meshComponent = static_cast<MeshComponent*>(GetComponentByName("mesh"));
+
+	GenerateMesh();
+}
+
+void Chunk::GenerateMesh()
+{
+	Mesh* mesh = meshComponent->GetMesh();
 
 	float meshStartX = -1.0f * (size_ / 2.0f);
 	float meshStartY = -1.0f * (size_ / 2.0f);
@@ -121,14 +127,14 @@ void Chunk::GenerateMesh()
 						faceVertices[2] = { meshX,		meshY + 1,	meshZ - 1, subTexture.startS, subTexture.endT }; // Top-left
 						faceVertices[3] = { meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
 
-						mesh.AddVertex(faceVertices[0]);
-						mesh.AddVertex(faceVertices[1]);
-						mesh.AddVertex(faceVertices[2]);
-						mesh.AddVertex(faceVertices[3]);
+						mesh->AddVertex(faceVertices[0]);
+						mesh->AddVertex(faceVertices[1]);
+						mesh->AddVertex(faceVertices[2]);
+						mesh->AddVertex(faceVertices[3]);
 
-						unsigned int offsetStart = mesh.GetNumVertices() - 1;
+						unsigned int offsetStart = mesh->GetNumVertices() - 1;
 
-						mesh.AddFace({
+						mesh->AddFace({
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
@@ -149,14 +155,14 @@ void Chunk::GenerateMesh()
 						faceVertices[2] = { meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.endT }; // Top-left
 						faceVertices[3] = { meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
 
-						mesh.AddVertex(faceVertices[0]);
-						mesh.AddVertex(faceVertices[1]);
-						mesh.AddVertex(faceVertices[2]);
-						mesh.AddVertex(faceVertices[3]);
+						mesh->AddVertex(faceVertices[0]);
+						mesh->AddVertex(faceVertices[1]);
+						mesh->AddVertex(faceVertices[2]);
+						mesh->AddVertex(faceVertices[3]);
 
-						unsigned int offsetStart = mesh.GetNumVertices() - 1;
+						unsigned int offsetStart = mesh->GetNumVertices() - 1;
 
-						mesh.AddFace({
+						mesh->AddFace({
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
@@ -177,14 +183,14 @@ void Chunk::GenerateMesh()
 						faceVertices[2] = { meshX + 1,	meshY + 1,	meshZ, subTexture.startS, subTexture.endT }; // Top-left
 						faceVertices[3] = { meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
 
-						mesh.AddVertex(faceVertices[0]);
-						mesh.AddVertex(faceVertices[1]);
-						mesh.AddVertex(faceVertices[2]);
-						mesh.AddVertex(faceVertices[3]);
+						mesh->AddVertex(faceVertices[0]);
+						mesh->AddVertex(faceVertices[1]);
+						mesh->AddVertex(faceVertices[2]);
+						mesh->AddVertex(faceVertices[3]);
 
-						unsigned int offsetStart = mesh.GetNumVertices() - 1;
+						unsigned int offsetStart = mesh->GetNumVertices() - 1;
 
-						mesh.AddFace({
+						mesh->AddFace({
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
@@ -205,14 +211,14 @@ void Chunk::GenerateMesh()
 						faceVertices[2] = { meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.endT }; // Top-left
 						faceVertices[3] = { meshX,		meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
 
-						mesh.AddVertex(faceVertices[0]);
-						mesh.AddVertex(faceVertices[1]);
-						mesh.AddVertex(faceVertices[2]);
-						mesh.AddVertex(faceVertices[3]);
+						mesh->AddVertex(faceVertices[0]);
+						mesh->AddVertex(faceVertices[1]);
+						mesh->AddVertex(faceVertices[2]);
+						mesh->AddVertex(faceVertices[3]);
 
-						unsigned int offsetStart = mesh.GetNumVertices() - 1;
+						unsigned int offsetStart = mesh->GetNumVertices() - 1;
 
-						mesh.AddFace({
+						mesh->AddFace({
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
@@ -233,14 +239,14 @@ void Chunk::GenerateMesh()
 						faceVertices[2] = { meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.endT }; // Top-left
 						faceVertices[3] = { meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.endT }; // Top-Right
 
-						mesh.AddVertex(faceVertices[0]);
-						mesh.AddVertex(faceVertices[1]);
-						mesh.AddVertex(faceVertices[2]);
-						mesh.AddVertex(faceVertices[3]);
+						mesh->AddVertex(faceVertices[0]);
+						mesh->AddVertex(faceVertices[1]);
+						mesh->AddVertex(faceVertices[2]);
+						mesh->AddVertex(faceVertices[3]);
 
-						unsigned int offsetStart = mesh.GetNumVertices() - 1;
+						unsigned int offsetStart = mesh->GetNumVertices() - 1;
 
-						mesh.AddFace({
+						mesh->AddFace({
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
@@ -261,29 +267,27 @@ void Chunk::GenerateMesh()
 						faceVertices[2] = { meshX,		meshY + 1,	meshZ - 1, subTexture.startS, subTexture.endT }; // Top-left
 						faceVertices[3] = { meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
 
-						mesh.AddVertex(faceVertices[0]);
-						mesh.AddVertex(faceVertices[1]);
-						mesh.AddVertex(faceVertices[2]);
-						mesh.AddVertex(faceVertices[3]);
+						mesh->AddVertex(faceVertices[0]);
+						mesh->AddVertex(faceVertices[1]);
+						mesh->AddVertex(faceVertices[2]);
+						mesh->AddVertex(faceVertices[3]);
 
-						unsigned int offsetStart = mesh.GetNumVertices() - 1;
+						unsigned int offsetStart = mesh->GetNumVertices() - 1;
 
-						mesh.AddFace({
+						mesh->AddFace({
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
 							offsetStart - 2,
 							offsetStart - 3,
 							offsetStart - 1
-						});
+							});
 					}
 				}
 			}
 		}
 	}
 
-	AddComponent("mesh", new MeshComponent(this, mesh));
-	meshComponent = static_cast<MeshComponent*>(GetComponentByName("mesh"));
 	meshComponent->SetModel(transformComponent->GetModel());
 }
 
@@ -341,7 +345,7 @@ void Chunk::Draw()
 	meshComponent->Draw();
 }
 
-void Chunk::UseNoise(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator)
+void Chunk::UseNoise(FastNoise::SmartNode<FastNoise::Simplex>& noiseGenerator)
 {
 	glm::vec3 position = static_cast<TransformComponent*>(GetComponentByName("transform"))->GetTranslation();
 
@@ -400,4 +404,18 @@ void Chunk::UseNoise(FastNoise::SmartNode<FastNoise::Simplex> noiseGenerator)
 
 		blocks_.push_back(zRow);
 	}
+}
+
+void Chunk::Unload()
+{
+	meshComponent->GetMesh()->Unload();
+}
+
+void Chunk::Recreate(FastNoise::SmartNode<FastNoise::Simplex>& noiseGenerator, glm::vec3 newStartingPosition, int seed)
+{
+	seed_ = seed;
+	blocks_.clear();
+	transformComponent->SetTranslation(newStartingPosition);
+	UseNoise(noiseGenerator);
+	GenerateMesh();
 }

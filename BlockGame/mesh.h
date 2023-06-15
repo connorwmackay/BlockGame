@@ -66,4 +66,6 @@ public:
 	 * Draws the mesh to the screen.
 	 */
 	void Draw();
+
+	void Unload();
 };

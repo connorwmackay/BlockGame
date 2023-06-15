@@ -170,3 +170,11 @@ void Mesh::Draw()
 
 	texture_->Unbind(GL_TEXTURE0);
 }
+
+void Mesh::Unload()
+{
+	glNamedBufferData(vbo_, vertices_.size() * sizeof(Vertex), NULL, GL_DYNAMIC_DRAW);
+	glNamedBufferData(ebo_, indices_.size() * sizeof(unsigned int), NULL, GL_DYNAMIC_DRAW);
+	vertices_.clear();
+	indices_.clear();
+}

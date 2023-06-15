@@ -94,9 +94,10 @@ void Game::Run()
 	std::vector<Chunk> world = std::vector<Chunk>();
 
 	double beforeWorldCreation = glfwGetTime();
-	for (int z=0; z < 11; z++)
+	int worldSize = 11;
+	for (int z=0; z < worldSize; z++)
 	{
-		for (int x=0; x < 11; x++)
+		for (int x=0; x < worldSize; x++)
 		{
 			world.push_back(Chunk(fastNoiseSimplex, glm::vec3(x * 16.0f, 0.0f, z * 16.0f), 16, seed));
 		}
@@ -115,6 +116,8 @@ void Game::Run()
 
 	FreeFormController freeFormController = FreeFormController(window, glm::vec3(0.0f, 18.0f, -32.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	freeFormController.Start();
+
+	bool hasRegenerated = false;
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -138,13 +141,42 @@ void Game::Run()
 		for (auto& chunk : world)
 		{
 			chunk.Update();
-		} 
+		}
 
 		freeFormController.Update();
 
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 		}
+
+		/*
+		 * Regenerates the world using another randomly chosen seed.
+		 */
+		if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS && !hasRegenerated)
+		{
+			hasRegenerated = true;
+			srand(time(NULL));
+			seed = rand();
+
+			for (auto& chunk : world)
+			{
+				chunk.Unload();
+			}
+
+			for (auto& chunk : world)
+			{
+				TransformComponent* transformComponent = static_cast<TransformComponent*>(chunk.GetComponentByName("transform"));
+				if (transformComponent) {
+					chunk.Recreate(fastNoiseSimplex, transformComponent->GetTranslation(), seed);
+				}
+			}
+		}
+
+		if (glfwGetKey(window, GLFW_KEY_G) == GLFW_RELEASE && hasRegenerated)
+		{
+			hasRegenerated = false;
+		}
+
 		glClearColor(0.0f, 0.3f, 0.5f, 1.0f);
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 

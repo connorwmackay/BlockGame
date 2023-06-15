@@ -39,3 +39,8 @@ void MeshComponent::SetProjection(glm::mat4 const& projection)
 {
 	mesh_.SetProjection(projection);
 }
+
+Mesh* MeshComponent::GetMesh()
+{
+	return &mesh_;
+}
