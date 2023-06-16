@@ -47,7 +47,7 @@ Mesh::Mesh(Texture* texture)
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-	shouldUpdateOnGPU = false;
+	shouldUpdateOnGPU.store(false);
 }
 
 Mesh::~Mesh()
@@ -86,24 +86,25 @@ void Mesh::AddVertex(Vertex vertex, bool onlyAddUnique)
 
 	if (!alreadyExists) {
 		vertices_.push_back(vertex);
-		shouldUpdateOnGPU = true;
+		shouldUpdateOnGPU.store(true);
 	}
 }
 
 void Mesh::AddVertices(std::vector<Vertex> vertices)
 {
 	vertices_.insert(vertices_.end(), vertices.begin(), vertices.end());
+	shouldUpdateOnGPU.store(true);
 }
 
 void Mesh::AddFace(std::vector<Vertex> vertices)
 {
-	for (auto vertex : vertices)
+	for (auto const& vertex : vertices)
 	{
 		bool wasFound = false;
 
 		for (int i = 0; i < vertices_.size(); i++)
 		{
-			if (vertex == vertices_[i] && !wasFound)
+			if (vertex == vertices_.at(i) && !wasFound)
 			{
 				indices_.push_back(i);
 				wasFound = true;
@@ -114,7 +115,19 @@ void Mesh::AddFace(std::vector<Vertex> vertices)
 			LOG("Couldn't find vertex point: (%f, %f, %f, %f, %f)\n", vertex.x, vertex.y, vertex.z, vertex.s, vertex.t);
 	}
 
-	shouldUpdateOnGPU = true;
+	shouldUpdateOnGPU.store(true);
+}
+
+void Mesh::SetVertices(std::vector<Vertex> vertices)
+{
+	vertices_ = vertices;
+	shouldUpdateOnGPU.store(true);
+}
+
+void Mesh::SetIndices(std::vector<unsigned int> indices)
+{
+	indices_ = indices;
+	shouldUpdateOnGPU.store(true);
 }
 
 void Mesh::AddFace(std::vector<unsigned int> indices)
@@ -154,14 +167,12 @@ void Mesh::Draw()
 
 	glBindVertexArray(vao_);
 
-	if (shouldUpdateOnGPU)
+	if (shouldUpdateOnGPU.load())
 	{
-		double beforeUpdate = glfwGetTime();
 		glNamedBufferData(vbo_, vertices_.size() * sizeof(Vertex), vertices_.data(), GL_DYNAMIC_DRAW);
 		glNamedBufferData(ebo_, indices_.size() * sizeof(unsigned int), indices_.data(), GL_DYNAMIC_DRAW);
-		double afterUpdate = glfwGetTime();
 
-		shouldUpdateOnGPU = false;
+		shouldUpdateOnGPU.store(false);
 	}
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);

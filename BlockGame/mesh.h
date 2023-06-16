@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <vector>
 #include <glad/glad.h>
 #include <glm/fwd.hpp>
@@ -29,7 +30,7 @@ class Mesh
 
 	shader shaderProgram;
 
-	bool shouldUpdateOnGPU;
+	std::atomic<bool> shouldUpdateOnGPU{false};
 public:
 	// Default constructor, this is only to satisfy C++, you shouldn't use this
 	// constructor.
@@ -52,6 +53,9 @@ public:
 	 */
 	void AddFace(std::vector<Vertex> vertices);
 	void AddFace(std::vector<unsigned int> indices);
+
+	void SetVertices(std::vector<Vertex> vertices);
+	void SetIndices(std::vector<unsigned int> indices);
 
 	int GetNumVertices();
 

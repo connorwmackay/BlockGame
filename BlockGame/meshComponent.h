@@ -6,12 +6,12 @@
 class MeshComponent : public Component 
 {
 protected:
-	Mesh mesh_;
+	Mesh* mesh_;
 public:
 	MeshComponent();
-	MeshComponent(Entity* owner, Mesh& mesh);
+	MeshComponent(Entity* owner, Mesh* mesh);
 
-	void SetMesh(Mesh& mesh);
+	void SetMesh(Mesh* mesh);
 
 	void Draw();
 	void SetModel(glm::mat4 const& model);

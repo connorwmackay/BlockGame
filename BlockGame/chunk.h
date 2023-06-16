@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <cstdint>
 #include <FastNoise/FastNoise.h>
 #include <FastNoise/SmartNode.h>
@@ -19,9 +20,9 @@ class Chunk : public Entity
 {
 	Texture2D* texture_;
 
-	int size_;
+	std::atomic<int> size_;
 
-	int seed_;
+	std::atomic<int> seed_;
 
 	// The blocks in the chunk (ordered z, then x, then y).
 	std::vector<std::vector<std::vector<uint8_t>>> blocks_;
@@ -29,16 +30,17 @@ class Chunk : public Entity
 	MeshComponent* meshComponent;
 	TransformComponent* transformComponent;
 protected:
-	void UseNoise(FastNoise::SmartNode<FastNoise::Simplex>& noiseGenerator);
-	void GenerateMesh();
+	void UseNoise(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator);
+	void GenerateMesh(bool isOnMainThread = true);
 
 	bool IsInChunk(int x, int y, int z);
 public:
-	Chunk(FastNoise::SmartNode<FastNoise::Simplex>& noiseGenerator, glm::vec3 startingPosition, int size, int seed);
+	Chunk(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator, glm::vec3 startingPosition, int size, int seed);
+
 	void Draw();
 
 	void Unload();
-	void Recreate(FastNoise::SmartNode<FastNoise::Simplex>& noiseGenerator, glm::vec3 newStartingPosition, int seed);
+	void Recreate(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator, glm::vec3 newStartingPosition, int seed, bool isOnMainThread = true);
 
 	void Update() override;
 };

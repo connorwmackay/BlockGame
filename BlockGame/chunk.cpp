@@ -6,52 +6,51 @@
 #include "meshComponent.h"
 #include "transformComponent.h"
 
-Chunk::Chunk(FastNoise::SmartNode<FastNoise::Simplex>& noiseGenerator, glm::vec3 startingPosition, int size, int seed)
+Chunk::Chunk(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator, glm::vec3 startingPosition, int size, int seed)
 	: Entity()
 {
-	size_ = size;
+	size_.store(size);
 	blocks_ = std::vector<std::vector<std::vector<uint8_t>>>();
-	seed_ = seed;
+	seed_.store(seed);
 
 	AddComponent("transform", new TransformComponent(this, startingPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
 	transformComponent = static_cast<TransformComponent*>(GetComponentByName("transform"));
-	UseNoise(noiseGenerator);
+	UseNoise(noiseGenerator.load());
 
 	TextureData textureData = Texture::LoadTextureDataFromFile("./Assets/textureAtlas.png");
 	texture_ = new Texture2D(textureData, GL_TEXTURE_2D, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST);
 	Texture::FreeTextureData(textureData);
 
-	Mesh mesh = Mesh(texture_);
-
-	AddComponent("mesh", new MeshComponent(this, mesh));
+	AddComponent("mesh", new MeshComponent(this, new Mesh(texture_)));
 	meshComponent = static_cast<MeshComponent*>(GetComponentByName("mesh"));
 
 	GenerateMesh();
 }
 
-void Chunk::GenerateMesh()
+void Chunk::GenerateMesh(bool isOnMainThread)
 {
 	Mesh* mesh = meshComponent->GetMesh();
 
-	float meshStartX = -1.0f * (size_ / 2.0f);
-	float meshStartY = -1.0f * (size_ / 2.0f);
-	float meshStartZ = -1.0f * (size_ / 2.0f);
+	float meshStartX = -1.0f * (size_.load() / 2.0f);
+	float meshStartY = -1.0f * (size_.load() / 2.0f);
+	float meshStartZ = -1.0f * (size_.load() / 2.0f);
 
 	TextureAtlas textureAtlas = { 3, 6 };
 
 	int numBlocksRendered = 0;
 
-	std::vector<Vertex> faceVertices = std::vector<Vertex>();
-	faceVertices.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
-	faceVertices.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
-	faceVertices.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
-	faceVertices.push_back({ 0.0f, 0.0f, 0.0f, 0.0f, 0.0f });
+	// We want to declare this inside the function because
+	// chunks can be called on other threads, therefore
+	// it's better just to replace the vertices and indices
+	// on the mesh rather than pass them between classes etc.
+	std::vector<Vertex> vertices = std::vector<Vertex>();
+	std::vector<unsigned int> indices = std::vector<unsigned int>();
 
-	for (int z = 0; z < size_; z++)
+	for (int z = 0; z < size_.load(); z++)
 	{
-		for (int x = 0; x < size_; x++)
+		for (int x = 0; x < size_.load(); x++)
 		{
-			for (int y = 0; y < size_; y++)
+			for (int y = 0; y < size_.load(); y++)
 			{
 				uint8_t currentBlock = blocks_[z][x][y];
 
@@ -122,26 +121,23 @@ void Chunk::GenerateMesh()
 
 						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
 
-						faceVertices[0] = { meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.startT }; // Bottom-Left
-						faceVertices[1] = { meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.startT }; // Bottom-Right
-						faceVertices[2] = { meshX,		meshY + 1,	meshZ - 1, subTexture.startS, subTexture.endT }; // Top-left
-						faceVertices[3] = { meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, subTexture.startS, subTexture.endT }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
 
-						mesh->AddVertex(faceVertices[0]);
-						mesh->AddVertex(faceVertices[1]);
-						mesh->AddVertex(faceVertices[2]);
-						mesh->AddVertex(faceVertices[3]);
+						unsigned int offsetStart = vertices.size() - 1;
 
-						unsigned int offsetStart = mesh->GetNumVertices() - 1;
-
-						mesh->AddFace({
+						indices.insert(indices.end(), 
+							{
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
 							offsetStart - 2,
 							offsetStart - 3,
 							offsetStart - 1
-						});
+							}
+						);
 					}
 
 					if (adjacentBlockDown == BLOCK_TYPE_AIR)
@@ -150,26 +146,23 @@ void Chunk::GenerateMesh()
 
 						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
 
-						faceVertices[0] = { meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }; // Bottom-Left
-						faceVertices[1] = { meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }; // Bottom-Right
-						faceVertices[2] = { meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.endT }; // Top-left
-						faceVertices[3] = { meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
+						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.endT }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
 
-						mesh->AddVertex(faceVertices[0]);
-						mesh->AddVertex(faceVertices[1]);
-						mesh->AddVertex(faceVertices[2]);
-						mesh->AddVertex(faceVertices[3]);
+						unsigned int offsetStart = vertices.size() - 1;
 
-						unsigned int offsetStart = mesh->GetNumVertices() - 1;
-
-						mesh->AddFace({
+						indices.insert(indices.end(),
+							{
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
 							offsetStart - 2,
 							offsetStart - 3,
 							offsetStart - 1
-							});
+							}
+						);
 					}
 
 					if (adjacentBlockRight == BLOCK_TYPE_AIR)
@@ -178,26 +171,23 @@ void Chunk::GenerateMesh()
 
 						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
 
-						faceVertices[0] = { meshX + 1,	meshY,		meshZ, subTexture.startS, subTexture.startT }; // Bottom-Left
-						faceVertices[1] = { meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }; // Bottom-Right
-						faceVertices[2] = { meshX + 1,	meshY + 1,	meshZ, subTexture.startS, subTexture.endT }; // Top-left
-						faceVertices[3] = { meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
+						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, subTexture.startS, subTexture.endT }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
 
-						mesh->AddVertex(faceVertices[0]);
-						mesh->AddVertex(faceVertices[1]);
-						mesh->AddVertex(faceVertices[2]);
-						mesh->AddVertex(faceVertices[3]);
+						unsigned int offsetStart = vertices.size() - 1;
 
-						unsigned int offsetStart = mesh->GetNumVertices() - 1;
-
-						mesh->AddFace({
+						indices.insert(indices.end(),
+							{
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
 							offsetStart - 2,
 							offsetStart - 3,
 							offsetStart - 1
-							});
+							}
+						);
 					}
 
 					if (adjacentBlockLeft == BLOCK_TYPE_AIR)
@@ -206,26 +196,23 @@ void Chunk::GenerateMesh()
 
 						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
 
-						faceVertices[0] = { meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }; // Bottom-Left
-						faceVertices[1] = { meshX,		meshY,		meshZ - 1, subTexture.endS, subTexture.startT }; // Bottom-Right
-						faceVertices[2] = { meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.endT }; // Top-left
-						faceVertices[3] = { meshX,		meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
+						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
+						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.endT }); // Top-left
+						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
 
-						mesh->AddVertex(faceVertices[0]);
-						mesh->AddVertex(faceVertices[1]);
-						mesh->AddVertex(faceVertices[2]);
-						mesh->AddVertex(faceVertices[3]);
+						unsigned int offsetStart = vertices.size() - 1;
 
-						unsigned int offsetStart = mesh->GetNumVertices() - 1;
-
-						mesh->AddFace({
+						indices.insert(indices.end(),
+							{
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
 							offsetStart - 2,
 							offsetStart - 3,
 							offsetStart - 1
-							});
+							}
+						);
 					}
 
 					if (adjacentBlockFront == BLOCK_TYPE_AIR)
@@ -234,26 +221,23 @@ void Chunk::GenerateMesh()
 
 						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
 
-						faceVertices[0] = { meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }; // Bottom-Left
-						faceVertices[1] = { meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }; // Bottom-Right
-						faceVertices[2] = { meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.endT }; // Top-left
-						faceVertices[3] = { meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.endT }; // Top-Right
+						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.endT }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.endT }); // Top-Right
 
-						mesh->AddVertex(faceVertices[0]);
-						mesh->AddVertex(faceVertices[1]);
-						mesh->AddVertex(faceVertices[2]);
-						mesh->AddVertex(faceVertices[3]);
+						unsigned int offsetStart = vertices.size() - 1;
 
-						unsigned int offsetStart = mesh->GetNumVertices() - 1;
-
-						mesh->AddFace({
+						indices.insert(indices.end(),
+							{
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
 							offsetStart - 2,
 							offsetStart - 3,
 							offsetStart - 1
-							});
+							}
+						);
 					}
 
 					if (adjacentBlockBack == BLOCK_TYPE_AIR)
@@ -262,33 +246,39 @@ void Chunk::GenerateMesh()
 
 						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
 
-						faceVertices[0] = { meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.startT }; // Bottom-Left
-						faceVertices[1] = { meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }; // Bottom-Right
-						faceVertices[2] = { meshX,		meshY + 1,	meshZ - 1, subTexture.startS, subTexture.endT }; // Top-left
-						faceVertices[3] = { meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }; // Top-Right
+						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.startT }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, subTexture.startS, subTexture.endT }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
 
-						mesh->AddVertex(faceVertices[0]);
-						mesh->AddVertex(faceVertices[1]);
-						mesh->AddVertex(faceVertices[2]);
-						mesh->AddVertex(faceVertices[3]);
+						unsigned int offsetStart = vertices.size() - 1;
 
-						unsigned int offsetStart = mesh->GetNumVertices() - 1;
-
-						mesh->AddFace({
+						indices.insert(indices.end(),
+							{
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
 							offsetStart - 2,
 							offsetStart - 3,
 							offsetStart - 1
-							});
+							}
+						);
 					}
 				}
 			}
 		}
 	}
 
-	meshComponent->SetModel(transformComponent->GetModel());
+	mesh->SetVertices(vertices);
+	mesh->SetIndices(indices);
+
+	if (isOnMainThread) {
+		LOG("Is on Main Thread!\n");
+		meshComponent->SetModel(transformComponent->GetModel());
+	} else
+	{
+		LOG("Is on separate thread.\n");
+	}
 }
 
 bool Chunk::IsInChunk(int x, int y, int z)
@@ -345,38 +335,39 @@ void Chunk::Draw()
 	meshComponent->Draw();
 }
 
-void Chunk::UseNoise(FastNoise::SmartNode<FastNoise::Simplex>& noiseGenerator)
+void Chunk::UseNoise(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator)
 {
 	glm::vec3 position = static_cast<TransformComponent*>(GetComponentByName("transform"))->GetTranslation();
 
 	// Fill the blocks_ container using noise
-	std::vector<float> simplexNoiseOutput(size_ * size_);
-	noiseGenerator->GenUniformGrid2D(
+	std::vector<float> simplexNoiseOutput(size_.load() * size_.load());
+	auto noise = noiseGenerator.load();
+	noise->get()->GenUniformGrid2D(
 		simplexNoiseOutput.data(),
 		(int)glm::floor(position.x),
 		(int)glm::floor(position.z),
-		size_,
-		size_,
+		size_.load(),
+		size_.load(),
 		0.02f,
-		seed_
+		seed_.load()
 	);
 
 	float beforeSettingBlocks = glfwGetTime();
 	int currentBlockIndex = 0;
 	int currentNoiseIndex = 0;
-	for (int z = 0; z < size_; z++)
+	for (int z = 0; z < size_.load(); z++)
 	{
 		std::vector<std::vector<uint8_t>> zRow = std::vector<std::vector<uint8_t>>();
 
-		for (int x = 0; x < size_; x++)
+		for (int x = 0; x < size_.load(); x++)
 		{
 			std::vector<uint8_t> xRow = std::vector<uint8_t>();
 
 			float currentNoiseVal = simplexNoiseOutput[currentNoiseIndex];
 
-			int yHeight = 8 + (currentNoiseVal * size_/2);
+			int yHeight = 8 + (currentNoiseVal * size_.load() /2);
 
-			for (int y = 0; y < size_; y++)
+			for (int y = 0; y < size_.load(); y++)
 			{
 				uint8_t currentBlock = BLOCK_TYPE_AIR;
 
@@ -411,11 +402,11 @@ void Chunk::Unload()
 	meshComponent->GetMesh()->Unload();
 }
 
-void Chunk::Recreate(FastNoise::SmartNode<FastNoise::Simplex>& noiseGenerator, glm::vec3 newStartingPosition, int seed)
+void Chunk::Recreate(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator, glm::vec3 newStartingPosition, int seed, bool isOnMainThread)
 {
-	seed_ = seed;
+	seed_.store(seed);
 	blocks_.clear();
 	transformComponent->SetTranslation(newStartingPosition);
-	UseNoise(noiseGenerator);
-	GenerateMesh();
+	UseNoise(noiseGenerator.load());
+	GenerateMesh(isOnMainThread);
 }

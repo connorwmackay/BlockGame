@@ -1,14 +1,16 @@
 #pragma once
+#include <atomic>
+
 #include "component.h"
 #include <glm/glm.hpp>
 
 class TransformComponent : public Component
 {
-	glm::vec3 translation_;
-	glm::vec3 rotation_;
-	glm::vec3 scale_;
+	std::atomic<glm::vec3> translation_;
+	std::atomic<glm::vec3> rotation_;
+	std::atomic<glm::vec3> scale_;
 
-	bool hasChanged_;
+	std::atomic<bool> hasChanged_ {true};
 public:
 	TransformComponent();
 	TransformComponent(Entity* owner, glm::vec3 translation, glm::vec3 rotation, glm::vec3 scale);

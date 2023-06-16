@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <string>
+#include <thread>
 #include <vector>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
@@ -91,7 +92,7 @@ void Game::Run()
 	glfwGetWindowSize(window, &width, &height);
 	perspective = glm::perspective(glm::radians(60.0f), (GLfloat)((float)width / (float)height), 0.1f, 400.0f);
 
-	std::vector<Chunk> world = std::vector<Chunk>();
+	std::vector<Chunk*> world = std::vector<Chunk*>();
 
 	double beforeWorldCreation = glfwGetTime();
 	int worldSize = 11;
@@ -99,17 +100,17 @@ void Game::Run()
 	{
 		for (int x=0; x < worldSize; x++)
 		{
-			world.push_back(Chunk(fastNoiseSimplex, glm::vec3(x * 16.0f, 0.0f, z * 16.0f), 16, seed));
+			world.push_back(new Chunk(std::atomic(&fastNoiseSimplex), glm::vec3(x * 16.0f, 0.0f, z * 16.0f), 16, seed));
 		}
 	}
 	double afterWorldCreation = glfwGetTime();
 	LOG("World Creation Time: %f seconds", (afterWorldCreation - beforeWorldCreation));
 
 	glm::mat4 oldView = glm::mat4(1.0f);
-	for (auto& chunk : world)
+	for (auto chunk : world)
 	{
-		chunk.Start();
-		MeshComponent* meshComponent = static_cast<MeshComponent*>(chunk.GetComponentByName("mesh"));
+		chunk->Start();
+		MeshComponent* meshComponent = static_cast<MeshComponent*>(chunk->GetComponentByName("mesh"));
 		meshComponent->SetProjection(perspective);
 		meshComponent->SetView(oldView);
 	}
@@ -119,6 +120,18 @@ void Game::Run()
 
 	bool hasRegenerated = false;
 
+	auto regenerate = [](FastNoise::SmartNode<FastNoise::Simplex>& noise, std::vector<Chunk*>& world, int seed)
+	{
+		for (auto chunk : world)
+		{
+			TransformComponent* transformComponent = static_cast<TransformComponent*>(chunk->GetComponentByName("transform"));
+			if (transformComponent) {
+				chunk->Recreate(&noise, transformComponent->GetTranslation(), seed, false);
+			}
+		}
+	};
+
+	std::thread regenerateThread;
 	while (!glfwWindowShouldClose(window))
 	{
 		debugInfo.StartFrame();
@@ -138,9 +151,9 @@ void Game::Run()
 
 		debugInfo.Display();
 
-		for (auto& chunk : world)
+		for (auto chunk : world)
 		{
-			chunk.Update();
+			chunk->Update();
 		}
 
 		freeFormController.Update();
@@ -154,22 +167,18 @@ void Game::Run()
 		 */
 		if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS && !hasRegenerated)
 		{
-			hasRegenerated = true;
 			srand(time(NULL));
 			seed = rand();
 
-			for (auto& chunk : world)
+			for (auto chunk : world)
 			{
-				chunk.Unload();
+				chunk->Unload();
 			}
 
-			for (auto& chunk : world)
-			{
-				TransformComponent* transformComponent = static_cast<TransformComponent*>(chunk.GetComponentByName("transform"));
-				if (transformComponent) {
-					chunk.Recreate(fastNoiseSimplex, transformComponent->GetTranslation(), seed);
-				}
-			}
+			regenerateThread = std::thread(regenerate, std::ref(fastNoiseSimplex), std::ref(world), seed);
+			regenerateThread.detach();
+
+			hasRegenerated = true;
 		}
 
 		if (glfwGetKey(window, GLFW_KEY_G) == GLFW_RELEASE && hasRegenerated)
@@ -190,15 +199,15 @@ void Game::Run()
 			shouldUpdateViews = true;
 		}
 
-		for (auto& chunk : world)
+		for (auto chunk : world)
 		{
 			if (shouldUpdateViews)
 			{
-				MeshComponent* chunkMeshComponent = static_cast<MeshComponent*>(chunk.GetComponentByName("mesh"));
+				MeshComponent* chunkMeshComponent = static_cast<MeshComponent*>(chunk->GetComponentByName("mesh"));
 				chunkMeshComponent->SetView(view);
 			}
 
-			chunk.Draw();
+			chunk->Draw();
 		}
 
 		// Display Game
