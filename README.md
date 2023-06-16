@@ -4,7 +4,7 @@
 # Using this Project
 This project uses Visual Studio 2022.
 
-1. Download the dependencies for this project here: <br>
+1. Download the dependencies for this project here: https://drive.google.com/file/d/1XS9ZxI5qlj_9hXGBJIeZJifyONhMKnU3/view?usp=sharing<br>
 
 2. Copy the dependencies folder into the folder with the Visual Studio Solution. The copied
 folder should be names "Libraries".
