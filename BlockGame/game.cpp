@@ -13,6 +13,7 @@
 #include "freeFormController.h"
 #include "meshComponent.h"
 #include "transformComponent.h"
+#include "world.h"
 
 void GLAPIENTRY
 MessageCallback(GLenum source,
@@ -92,22 +93,10 @@ void Game::Run()
 	glfwGetWindowSize(window, &width, &height);
 	perspective = glm::perspective(glm::radians(60.0f), (GLfloat)((float)width / (float)height), 0.1f, 400.0f);
 
-	std::vector<Chunk*> world = std::vector<Chunk*>();
-
-	double beforeWorldCreation = glfwGetTime();
-	int worldSize = 11;
-	for (int z=0; z < worldSize; z++)
-	{
-		for (int x=0; x < worldSize; x++)
-		{
-			world.push_back(new Chunk(std::atomic(&fastNoiseSimplex), glm::vec3(x * 16.0f, 0.0f, z * 16.0f), 16, seed));
-		}
-	}
-	double afterWorldCreation = glfwGetTime();
-	LOG("World Creation Time: %f seconds", (afterWorldCreation - beforeWorldCreation));
+	World world = World(glm::vec3(0.0f, 0.0f, 0.0f), 15);
 
 	glm::mat4 oldView = glm::mat4(1.0f);
-	for (auto chunk : world)
+	for (Chunk* chunk : world.GetWorld())
 	{
 		chunk->Start();
 		MeshComponent* meshComponent = static_cast<MeshComponent*>(chunk->GetComponentByName("mesh"));
@@ -115,14 +104,14 @@ void Game::Run()
 		meshComponent->SetView(oldView);
 	}
 
-	FreeFormController freeFormController = FreeFormController(window, glm::vec3(0.0f, 18.0f, -32.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	FreeFormController freeFormController = FreeFormController(window, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	freeFormController.Start();
 
 	bool hasRegenerated = false;
 
-	auto regenerate = [](FastNoise::SmartNode<FastNoise::Simplex>& noise, std::vector<Chunk*>& world, int seed)
+	auto regenerate = [](FastNoise::SmartNode<FastNoise::Simplex>& noise, World& world, int seed)
 	{
-		for (auto chunk : world)
+		for (Chunk* chunk : world.GetWorld())
 		{
 			TransformComponent* transformComponent = static_cast<TransformComponent*>(chunk->GetComponentByName("transform"));
 			if (transformComponent) {
@@ -130,6 +119,8 @@ void Game::Run()
 			}
 		}
 	};
+
+	TransformComponent* freeFormTransform = static_cast<TransformComponent*>(freeFormController.GetComponentByName("transform"));
 
 	std::thread regenerateThread;
 	while (!glfwWindowShouldClose(window))
@@ -151,7 +142,9 @@ void Game::Run()
 
 		debugInfo.Display();
 
-		for (auto chunk : world)
+		world.Update(freeFormTransform->GetTranslation());
+
+		for (Chunk* chunk : world.GetWorld())
 		{
 			chunk->Update();
 		}
@@ -170,7 +163,7 @@ void Game::Run()
 			srand(time(NULL));
 			seed = rand();
 
-			for (auto chunk : world)
+			for (Chunk* chunk : world.GetWorld())
 			{
 				chunk->Unload();
 			}
@@ -199,7 +192,7 @@ void Game::Run()
 			shouldUpdateViews = true;
 		}
 
-		for (auto chunk : world)
+		for (auto chunk : world.GetWorld())
 		{
 			if (shouldUpdateViews)
 			{

@@ -273,11 +273,7 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 	mesh->SetIndices(indices);
 
 	if (isOnMainThread) {
-		LOG("Is on Main Thread!\n");
 		meshComponent->SetModel(transformComponent->GetModel());
-	} else
-	{
-		LOG("Is on separate thread.\n");
 	}
 }
 

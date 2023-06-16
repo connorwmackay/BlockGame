@@ -71,12 +71,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\conno\source\repos\BlockGame\Libraries\stb;C:\Users\conno\source\repos\BlockGame\Libraries\FastNoise2\include;C:\Users\conno\source\repos\BlockGame\Libraries\glm;C:\Users\conno\source\repos\BlockGame\Libraries\imgui\backends;C:\Users\conno\source\repos\BlockGame\Libraries\imgui;C:\Users\conno\source\repos\BlockGame\Libraries\glad\include;C:\Users\conno\source\repos\BlockGame\Libraries\GLFW\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\conno\source\repos\BlockGame\Libraries\FastNoise2\lib;C:\Users\conno\source\repos\BlockGame\Libraries\GLFW\lib-vc2022;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)\Libraries\stb;$(SolutionDir)\Libraries\FastNoise2\include;$(SolutionDir)\Libraries\glm;$(SolutionDir)\Libraries\imgui\backends;$(SolutionDir)\Libraries\imgui;$(SolutionDir)\Libraries\glad\include;$(SolutionDir)\Libraries\GLFW\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\Libraries\FastNoise2\lib;$(SolutionDir)\Libraries\GLFW\lib-vc2022;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>C:\Users\conno\source\repos\BlockGame\Libraries\stb;C:\Users\conno\source\repos\BlockGame\Libraries\FastNoise2\include;C:\Users\conno\source\repos\BlockGame\Libraries\glm;C:\Users\conno\source\repos\BlockGame\Libraries\imgui\backends;C:\Users\conno\source\repos\BlockGame\Libraries\imgui;C:\Users\conno\source\repos\BlockGame\Libraries\glad\include;C:\Users\conno\source\repos\BlockGame\Libraries\GLFW\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\conno\source\repos\BlockGame\Libraries\FastNoise2\lib;C:\Users\conno\source\repos\BlockGame\Libraries\GLFW\lib-vc2022;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)\Libraries\stb;$(SolutionDir)\Libraries\FastNoise2\include;$(SolutionDir)\Libraries\glm;$(SolutionDir)\Libraries\imgui\backends;$(SolutionDir)\Libraries\imgui;$(SolutionDir)\Libraries\glad\include;$(SolutionDir)\Libraries\GLFW\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)\Libraries\FastNoise2\lib;$(SolutionDir)\Libraries\GLFW\lib-vc2022;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -159,6 +159,7 @@
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="texture.cpp" />
     <ClCompile Include="transformComponent.cpp" />
+    <ClCompile Include="world.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cameraComponent.h" />
@@ -174,6 +175,7 @@
     <ClInclude Include="shader.h" />
     <ClInclude Include="texture.h" />
     <ClInclude Include="transformComponent.h" />
+    <ClInclude Include="world.h" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Libraries\FastNoise2\bin\FastNoise.dll">
