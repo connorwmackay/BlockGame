@@ -93,7 +93,7 @@ void Game::Run()
 	glfwGetWindowSize(window, &width, &height);
 	perspective = glm::perspective(glm::radians(60.0f), (GLfloat)((float)width / (float)height), 0.1f, 400.0f);
 
-	World world = World(glm::vec3(0.0f, 0.0f, 0.0f), 11);
+	World world = World(glm::vec3(0.0f, 0.0f, 0.0f), 10);
 
 	glm::mat4 oldView = glm::mat4(1.0f);
 	for (Chunk* chunk : world.GetWorld())
