@@ -12,12 +12,13 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 
 	simplexNoise_ = FastNoise::New<FastNoise::Simplex>();
 
-	int startZ = World::FindClosestPosition(currentPlayerPos.z, 16) - (16 * glm::floor(renderDistance_) / 2);
-	int startX = World::FindClosestPosition(currentPlayerPos.x, 16) - (16 * glm::floor(renderDistance_) / 2);
+	int startZ = World::FindClosestPosition(currentPlayerPos.z, 16) - (16 * glm::floor(renderDistance_-1));
+	int startX = World::FindClosestPosition(currentPlayerPos.x, 16) - (16 * glm::floor(renderDistance_-1));
 
-	for (int z = 0; z < renderDistance; z++)
+	// Double render distance since it pertains to all sides
+	for (int z = 0; z < renderDistance*2+1; z++)
 	{
-		for (int x = 0; x < renderDistance; x++)
+		for (int x = 0; x < renderDistance*2+1; x++)
 		{
 			chunks_.push_back(new Chunk(std::atomic(&simplexNoise_), glm::vec3(startX + (x * 16.0f), 0.0f, startZ + (z * 16.0f)), 16, seed_));
 		}
@@ -35,10 +36,10 @@ void World::Update(glm::vec3 currentPlayerPos)
 
 	if ((oldZ != newZ || oldX != newX))
 	{
-		int startZ = newZ - (int)(16 * glm::floor(renderDistance_/2));
-		int startX = newX - (int)(16 * glm::floor(renderDistance_/2));
-		int endZ = newZ + (int)(16 * glm::floor(renderDistance_ / 2));
-		int endX = newX + (int)(16 * glm::floor(renderDistance_ / 2));
+		int startZ = newZ - (int)(16 * glm::floor(renderDistance_));
+		int startX = newX - (int)(16 * glm::floor(renderDistance_));
+		int endZ = newZ + (int)(16 * glm::floor(renderDistance_));
+		int endX = newX + (int)(16 * glm::floor(renderDistance_));
 
 		// Unload all chunks outside the bounds set just above
 		std::vector<Chunk*> unloadedChunks = std::vector<Chunk*>();
