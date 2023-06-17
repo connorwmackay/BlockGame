@@ -28,7 +28,7 @@ This is my attempt at making a Minecraft clone using OpenGL and C++. My previous
   - Surface entrances
 
 # How to Use This Project
-This project uses Visual Studio 2022.
+This project uses Visual Studio 2022 and has only been tested on Windows.
 
 1. Download the dependencies for this project here: https://drive.google.com/file/d/1XS9ZxI5qlj_9hXGBJIeZJifyONhMKnU3/view?usp=sharing<br>
 
