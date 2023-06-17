@@ -12,8 +12,8 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 
 	simplexNoise_ = FastNoise::New<FastNoise::Simplex>();
 
-	int startZ = World::FindClosestPosition(currentPlayerPos.z, 16) - ((16 * (renderDistance-1)) / 2);
-	int startX = World::FindClosestPosition(currentPlayerPos.x, 16) - ((16 * (renderDistance-1)) / 2);
+	int startZ = World::FindClosestPosition(currentPlayerPos.z, 16) - (16 * glm::floor(renderDistance_) / 2);
+	int startX = World::FindClosestPosition(currentPlayerPos.x, 16) - (16 * glm::floor(renderDistance_) / 2);
 
 	for (int z = 0; z < renderDistance; z++)
 	{
@@ -33,17 +33,79 @@ void World::Update(glm::vec3 currentPlayerPos)
 	int newZ = World::FindClosestPosition(currentPlayerPos.z, 16);
 	int newX = World::FindClosestPosition(currentPlayerPos.x, 16);
 
-	// TODO: Perform a raycast from player's forward vector to the nearest chunk
-
-	if (oldZ != newZ || oldX != newX)
+	if ((oldZ != newZ || oldX != newX))
 	{
-		// Determine startX, endX, startZ, endZ
-		// i.e. so that all chunks are from the start of player pos onwards...
+		int startZ = newZ - (int)(16 * glm::floor(renderDistance_/2));
+		int startX = newX - (int)(16 * glm::floor(renderDistance_/2));
+		int endZ = newZ + (int)(16 * glm::floor(renderDistance_ / 2));
+		int endX = newX + (int)(16 * glm::floor(renderDistance_ / 2));
 
+		// Unload all chunks outside the bounds set just above
+		std::vector<Chunk*> unloadedChunks = std::vector<Chunk*>();
+		std::vector<glm::vec3> loadedChunkPositions = std::vector<glm::vec3>();
+		for (Chunk* chunk : chunks_)
+		{
+			TransformComponent* transformComponent = static_cast<TransformComponent*>(chunk->GetComponentByName("transform"));
+			glm::vec3 chunkLoc = transformComponent->GetTranslation();
+			int chunkX = chunkLoc.x;
+			int chunkZ = chunkLoc.z;
+
+			// If chunk is outside the new render bounds
+			if (chunkZ < startZ || chunkZ > endZ || chunkX < startX || chunkX > endX)
+			{
+				// Unload the chunk
+				chunk->Unload();
+
+				// Add to unloaded chunks list
+				unloadedChunks.push_back(chunk);
+			}
+			else
+			{
+				loadedChunkPositions.push_back(chunkLoc);
+			}
+		}
+
+		std::vector<glm::vec3> positionsToLoad = std::vector<glm::vec3>();
+
+		int zIncrement = 16;
+		if (endZ < startZ)
+		{
+			zIncrement = -16;
+		}
+
+		int xIncrement = 16;
+		if (endX < startX)
+		{
+			xIncrement = -16;
+		}
+
+		for (int z=startZ; z <= endZ; z += zIncrement)
+		{
+			for (int x=startX; x <= endX; x += xIncrement)
+			{
+				bool isAlreadyLoaded = false;
+				for (glm::vec3 loadedChunkPos : loadedChunkPositions)
+				{
+					int loadedChunkZ = static_cast<int>(loadedChunkPos.z);
+					int loadedChunkX = static_cast<int>(loadedChunkPos.x);
+					
+					if (loadedChunkX == x && loadedChunkZ == z)
+					{
+						isAlreadyLoaded = true;
+					}
+				}
+
+				if (!isAlreadyLoaded)
+				{
+					positionsToLoad.push_back(glm::vec3(x, 0.0f, z));
+				}
+			}
+		}
 
 		// Load the new chunks asynchronously
-		//loadingChunks_ = std::async(std::launch::async, &World::LoadNewChunksAsync, this, positionsToLoad, unloadedChunkIndexes);
+		loadingChunks_ = std::async(std::launch::async, &World::LoadNewChunksAsync, this, positionsToLoad, unloadedChunks);
 	}
+
 	lastKnownPlayerPos_ = currentPlayerPos;
 }
 
@@ -67,23 +129,18 @@ int World::FindClosestPosition(int val, int multiple)
 	return option2;
 }
 
-bool World::LoadNewChunksAsync(std::vector<glm::vec3> positions, std::vector<int> chunkIndexes)
+bool World::LoadNewChunksAsync(std::vector<glm::vec3> positions, std::vector<Chunk*> chunkIndexes)
 {
-	for (int& chunkIndex : chunkIndexes)
+	loadingChunksMutex_.lock();
+	for (int i = 0; i < chunkIndexes.size(); i++)
 	{
 		if (positions.size() > 0) {
 			glm::vec3 newPosition = positions.at(0);
 			positions.erase(positions.begin());
 
-			if (chunkIndex >= 0 && chunkIndex < chunks_.size()) {
-				chunks_[chunkIndex]->Recreate(&simplexNoise_, newPosition, seed_, false);
-			}
-		}
-		else
-		{
-			LOG("Error: There weren't enough positions to fill the unloaded chunks\n");
+			chunkIndexes[i]->Recreate(&simplexNoise_, newPosition, seed_, false);
 		}
 	}
-
+	loadingChunksMutex_.unlock();
 	return true;
 }

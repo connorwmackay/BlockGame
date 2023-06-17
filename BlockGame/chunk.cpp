@@ -12,6 +12,7 @@ Chunk::Chunk(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerat
 	size_.store(size);
 	blocks_ = std::vector<std::vector<std::vector<uint8_t>>>();
 	seed_.store(seed);
+	isUnloaded.store(false);
 
 	AddComponent("transform", new TransformComponent(this, startingPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
 	transformComponent = static_cast<TransformComponent*>(GetComponentByName("transform"));
@@ -29,6 +30,7 @@ Chunk::Chunk(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerat
 
 void Chunk::GenerateMesh(bool isOnMainThread)
 {
+
 	Mesh* mesh = meshComponent->GetMesh();
 
 	float meshStartX = -1.0f * (size_.load() / 2.0f);
@@ -282,19 +284,19 @@ bool Chunk::IsInChunk(int x, int y, int z)
 	// Ensure the chunk actually has blocks in it.
 	if (blocks_.empty())
 	{
-		LOG("There are no blocks in the chunk: Z\n");
+		LOG("There are no blocks in the chunk: (%d, %d, %d)\n", x, y ,z);
 		return false;
 	}
 
 	if (blocks_[0].empty())
 	{
-		LOG("There are no blocks in the chunk: X\n");
+		LOG("There are no blocks in the chunk: (%d, %d, %d)\n", x, y, z);
 		return false;
 	}
 
 	if (blocks_[0][0].empty())
 	{
-		LOG("There are no blocks in the chunk: Y\n");
+		LOG("There are no blocks in the chunk: (%d, %d, %d)\n", x, y, z);
 		return false;
 	}
 
@@ -328,12 +330,22 @@ void Chunk::Update()
 
 void Chunk::Draw()
 {
-	meshComponent->Draw();
+	if (!isUnloaded.load()) {
+		meshComponent->Draw();
+	}
 }
 
 void Chunk::UseNoise(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator)
 {
-	glm::vec3 position = static_cast<TransformComponent*>(GetComponentByName("transform"))->GetTranslation();
+	std::vector<std::vector<std::vector<uint8_t>>> blocks = std::vector<std::vector<std::vector<uint8_t>>>();
+
+	if (!transformComponent)
+	{
+		LOG("Error: Transform Component was nullptr\n");
+		return;
+	}
+
+	glm::vec3 position = transformComponent->GetTranslation();
 
 	// Fill the blocks_ container using noise
 	std::vector<float> simplexNoiseOutput(size_.load() * size_.load());
@@ -348,7 +360,6 @@ void Chunk::UseNoise(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> nois
 		seed_.load()
 	);
 
-	float beforeSettingBlocks = glfwGetTime();
 	int currentBlockIndex = 0;
 	int currentNoiseIndex = 0;
 	for (int z = 0; z < size_.load(); z++)
@@ -389,13 +400,16 @@ void Chunk::UseNoise(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> nois
 			currentNoiseIndex++;
 		}
 
-		blocks_.push_back(zRow);
+		blocks.push_back(zRow);
 	}
+
+	blocks_ = blocks;
 }
 
 void Chunk::Unload()
 {
 	meshComponent->GetMesh()->Unload();
+	isUnloaded.store(true);
 }
 
 void Chunk::Recreate(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator, glm::vec3 newStartingPosition, int seed, bool isOnMainThread)
@@ -405,4 +419,5 @@ void Chunk::Recreate(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> nois
 	transformComponent->SetTranslation(newStartingPosition);
 	UseNoise(noiseGenerator.load());
 	GenerateMesh(isOnMainThread);
+	isUnloaded.store(false);
 }

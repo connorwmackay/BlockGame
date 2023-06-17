@@ -29,6 +29,8 @@ class Chunk : public Entity
 
 	MeshComponent* meshComponent;
 	TransformComponent* transformComponent;
+
+	std::atomic<bool> isUnloaded{false};
 protected:
 	void UseNoise(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator);
 	void GenerateMesh(bool isOnMainThread = true);
