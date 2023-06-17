@@ -21,6 +21,7 @@ This is my attempt at making a Minecraft clone using OpenGL and C++. My previous
   - Snow
 - Player controller (with gravity and collision) **(Low priority)**
 - Directional light **(Medium Priority)**
+- Skybox **(Medium Priority)**
 - Fog at the end of the player's render distance **(Medium Priority)**
 - Switch to using CMake and automatically download dependencies on Windows **(Low Priority)**
 - Caves **(Very Low Priority)**
