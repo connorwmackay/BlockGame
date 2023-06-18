@@ -18,6 +18,8 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 	fractalNoise_->SetLacunarity(0);
 	fractalNoise_->SetGain(0.5f);
 
+	worldWorker_ = new WorldWorker(1);
+
 	int startZ = World::FindClosestPosition(currentPlayerPos.z, 16) - (16 * glm::floor(renderDistance_-1));
 	int startX = World::FindClosestPosition(currentPlayerPos.x, 16) - (16 * glm::floor(renderDistance_-1));
 
@@ -76,65 +78,10 @@ void World::Update(glm::vec3 currentPlayerPos)
 			}
 		}
 
-		std::vector<glm::vec3> positionsToLoad = std::vector<glm::vec3>();
-		std::vector<glm::vec3> chunkSectionPositions = std::vector<glm::vec3>();
-
-		int zIncrement = 16;
-		if (endZ < startZ)
-		{
-			zIncrement = -16;
-		}
-
-		int xIncrement = 16;
-		if (endX < startX)
-		{
-			xIncrement = -16;
-		}
-
-		for (int z=startZ; z <= endZ; z += zIncrement)
-		{
-			for (int x=startX; x <= endX; x += xIncrement)
-			{
-				bool shouldAddNoise = true;
-				for (glm::vec3 loadedChunkPos : loadedChunkPositions)
-				{
-					int loadedChunkZ = static_cast<int>(loadedChunkPos.z);
-					int loadedChunkX = static_cast<int>(loadedChunkPos.x);
-
-					if (loadedChunkX == x && loadedChunkZ == z)
-					{
-						shouldAddNoise = false;
-					}
-				}
-
-				for (int y = yMin; y <= yMax; y++) {
-					bool shouldAddPosition = true;
-					for (glm::vec3 loadedChunkPos : loadedChunkPositions)
-					{
-						int loadedChunkZ = static_cast<int>(loadedChunkPos.z);
-						int loadedChunkX = static_cast<int>(loadedChunkPos.x);
-						int loadedChunkY = static_cast<int>(loadedChunkPos.y);
-
-						if (loadedChunkX == x && loadedChunkZ == z && loadedChunkY == (y*16))
-						{
-							shouldAddPosition = false;
-						}
-					}
-
-					if (shouldAddPosition)
-					{
-						positionsToLoad.push_back(glm::vec3(x, y * 16, z));
-					}
-				}
-
-				if (shouldAddNoise) {
-					chunkSectionPositions.push_back(glm::vec3(x, 0, z));
-				}
-			}
-		}
-
 		// Load the new chunks asynchronously
-		loadingChunks_ = std::async(std::launch::async, &World::LoadNewChunksAsync, this, chunkSectionPositions, positionsToLoad, unloadedChunks);
+		if (worldWorker_->AreAnyThreadsAvailable()) {
+			worldWorker_->QueueFunction({ &World::LoadNewChunksAsync, this, startX, endX, startZ, endZ, loadedChunkPositions, unloadedChunks });
+		}
 	}
 
 	lastKnownPlayerPos_ = currentPlayerPos;
@@ -160,21 +107,70 @@ int World::FindClosestPosition(int val, int multiple)
 	return option2;
 }
 
-bool World::LoadNewChunksAsync(std::vector<glm::vec3> chunkSectionPositions, std::vector<glm::vec3> positions, std::vector<Chunk*> chunkIndexes)
+bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::vector<glm::vec3> loadedChunkPositions, std::vector<Chunk*> chunkIndexes)
 {
-	loadingChunksMutex_.lock();
-
+	std::vector<glm::vec3> positionsToLoad = std::vector<glm::vec3>();
 	std::vector<ChunkNoiseSection> chunkNoiseSections = std::vector<ChunkNoiseSection>();
-	for (glm::vec3& chunkNoisePos : chunkSectionPositions)
+
+	int zIncrement = 16;
+	if (endZ < startZ)
 	{
-		chunkNoiseSections.push_back({ chunkNoisePos, GetNoiseForChunkSection(chunkNoisePos.x, chunkNoisePos.z, 16) });
+		zIncrement = -16;
+	}
+
+	int xIncrement = 16;
+	if (endX < startX)
+	{
+		xIncrement = -16;
+	}
+
+	for (int z = startZ; z <= endZ; z += zIncrement)
+	{
+		for (int x = startX; x <= endX; x += xIncrement)
+		{
+			bool shouldAddNoise = true;
+			for (glm::vec3 loadedChunkPos : loadedChunkPositions)
+			{
+				int loadedChunkZ = static_cast<int>(loadedChunkPos.z);
+				int loadedChunkX = static_cast<int>(loadedChunkPos.x);
+
+				if (loadedChunkX == x && loadedChunkZ == z)
+				{
+					shouldAddNoise = false;
+				}
+			}
+
+			for (int y = yMin; y <= yMax; y++) {
+				bool shouldAddPosition = true;
+				for (glm::vec3 loadedChunkPos : loadedChunkPositions)
+				{
+					int loadedChunkZ = static_cast<int>(loadedChunkPos.z);
+					int loadedChunkX = static_cast<int>(loadedChunkPos.x);
+					int loadedChunkY = static_cast<int>(loadedChunkPos.y);
+
+					if (loadedChunkX == x && loadedChunkZ == z && loadedChunkY == (y * 16))
+					{
+						shouldAddPosition = false;
+					}
+				}
+
+				if (shouldAddPosition)
+				{
+					positionsToLoad.push_back(glm::vec3(x, y * 16, z));
+				}
+			}
+
+			if (shouldAddNoise) {
+				chunkNoiseSections.push_back({ glm::vec3(x, 0, z), GetNoiseForChunkSection(x, z, 16)});
+			}
+		}
 	}
 
 	for (int i = 0; i < chunkIndexes.size(); i++)
 	{
-		if (positions.size() > 0) {
-			glm::vec3 newPosition = positions.at(0);
-			positions.erase(positions.begin());
+		if (positionsToLoad.size() > 0) {
+			glm::vec3 newPosition = positionsToLoad.at(0);
+			positionsToLoad.erase(positionsToLoad.begin());
 
 			int chunkNoiseSectionInd = 0;
 
@@ -191,7 +187,6 @@ bool World::LoadNewChunksAsync(std::vector<glm::vec3> chunkSectionPositions, std
 			chunkIndexes[i]->Recreate(chunkNoiseSections.at(chunkNoiseSectionInd).noise, yMin, yMax, newPosition, seed_, false);
 		}
 	}
-	loadingChunksMutex_.unlock();
 	return true;
 }
 
