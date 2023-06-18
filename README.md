@@ -11,7 +11,7 @@ This is my attempt at making a Minecraft clone using OpenGL and C++. My previous
 - ImGui is integrated
 
 # Planned Features
-- More varied noise **(High priority)**
+- **[In Progress]** More varied noise **(High priority)**
   - Hills larger than 1 chunk in height
   - Mix flatland and hills
 - Biomes **(High priority)**

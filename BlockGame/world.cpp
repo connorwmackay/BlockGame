@@ -3,6 +3,7 @@
 #include <future>
 
 #include "logging.h"
+#include <unordered_map>
 
 World::World(glm::vec3 currentPlayerPos, int renderDistance)
 {
@@ -10,7 +11,12 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 	seed_ = rand();
 	renderDistance_ = renderDistance;
 
-	simplexNoise_ = FastNoise::New<FastNoise::Simplex>();
+	auto fastNoiseSimplex = FastNoise::New<FastNoise::Simplex>();
+	fractalNoise_ = FastNoise::New<FastNoise::FractalFBm>();
+	fractalNoise_->SetSource(fastNoiseSimplex);
+	fractalNoise_->SetOctaveCount(2);
+	fractalNoise_->SetLacunarity(0);
+	fractalNoise_->SetGain(0.5f);
 
 	int startZ = World::FindClosestPosition(currentPlayerPos.z, 16) - (16 * glm::floor(renderDistance_-1));
 	int startX = World::FindClosestPosition(currentPlayerPos.x, 16) - (16 * glm::floor(renderDistance_-1));
@@ -20,7 +26,11 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 	{
 		for (int x = 0; x < renderDistance*2+1; x++)
 		{
-			chunks_.push_back(new Chunk(std::atomic(&simplexNoise_), glm::vec3(startX + (x * 16.0f), 0.0f, startZ + (z * 16.0f)), 16, seed_));
+			std::vector<float> chunkSectionNoise = GetNoiseForChunkSection(startX + x * 16.0f, startZ + z * 16.0f, 16);
+
+			for (int y = yMin; y <= yMax; y++) {
+				chunks_.push_back(new Chunk(chunkSectionNoise, yMin, yMax, glm::vec3(startX + (x * 16.0f), y * 16.0f, startZ + (z * 16.0f)), 16, seed_));
+			}
 		}
 	}
 
@@ -67,6 +77,7 @@ void World::Update(glm::vec3 currentPlayerPos)
 		}
 
 		std::vector<glm::vec3> positionsToLoad = std::vector<glm::vec3>();
+		std::vector<glm::vec3> chunkSectionPositions = std::vector<glm::vec3>();
 
 		int zIncrement = 16;
 		if (endZ < startZ)
@@ -84,27 +95,46 @@ void World::Update(glm::vec3 currentPlayerPos)
 		{
 			for (int x=startX; x <= endX; x += xIncrement)
 			{
-				bool isAlreadyLoaded = false;
+				bool shouldAddNoise = true;
 				for (glm::vec3 loadedChunkPos : loadedChunkPositions)
 				{
 					int loadedChunkZ = static_cast<int>(loadedChunkPos.z);
 					int loadedChunkX = static_cast<int>(loadedChunkPos.x);
-					
+
 					if (loadedChunkX == x && loadedChunkZ == z)
 					{
-						isAlreadyLoaded = true;
+						shouldAddNoise = false;
 					}
 				}
 
-				if (!isAlreadyLoaded)
-				{
-					positionsToLoad.push_back(glm::vec3(x, 0.0f, z));
+				for (int y = yMin; y <= yMax; y++) {
+					bool shouldAddPosition = true;
+					for (glm::vec3 loadedChunkPos : loadedChunkPositions)
+					{
+						int loadedChunkZ = static_cast<int>(loadedChunkPos.z);
+						int loadedChunkX = static_cast<int>(loadedChunkPos.x);
+						int loadedChunkY = static_cast<int>(loadedChunkPos.y);
+
+						if (loadedChunkX == x && loadedChunkZ == z && loadedChunkY == (y*16))
+						{
+							shouldAddPosition = false;
+						}
+					}
+
+					if (shouldAddPosition)
+					{
+						positionsToLoad.push_back(glm::vec3(x, y * 16, z));
+					}
+				}
+
+				if (shouldAddNoise) {
+					chunkSectionPositions.push_back(glm::vec3(x, 0, z));
 				}
 			}
 		}
 
 		// Load the new chunks asynchronously
-		loadingChunks_ = std::async(std::launch::async, &World::LoadNewChunksAsync, this, positionsToLoad, unloadedChunks);
+		loadingChunks_ = std::async(std::launch::async, &World::LoadNewChunksAsync, this, chunkSectionPositions, positionsToLoad, unloadedChunks);
 	}
 
 	lastKnownPlayerPos_ = currentPlayerPos;
@@ -130,18 +160,53 @@ int World::FindClosestPosition(int val, int multiple)
 	return option2;
 }
 
-bool World::LoadNewChunksAsync(std::vector<glm::vec3> positions, std::vector<Chunk*> chunkIndexes)
+bool World::LoadNewChunksAsync(std::vector<glm::vec3> chunkSectionPositions, std::vector<glm::vec3> positions, std::vector<Chunk*> chunkIndexes)
 {
 	loadingChunksMutex_.lock();
+
+	std::vector<ChunkNoiseSection> chunkNoiseSections = std::vector<ChunkNoiseSection>();
+	for (glm::vec3& chunkNoisePos : chunkSectionPositions)
+	{
+		chunkNoiseSections.push_back({ chunkNoisePos, GetNoiseForChunkSection(chunkNoisePos.x, chunkNoisePos.z, 16) });
+	}
+
 	for (int i = 0; i < chunkIndexes.size(); i++)
 	{
 		if (positions.size() > 0) {
 			glm::vec3 newPosition = positions.at(0);
 			positions.erase(positions.begin());
 
-			chunkIndexes[i]->Recreate(&simplexNoise_, newPosition, seed_, false);
+			int chunkNoiseSectionInd = 0;
+
+			for (int i=0; i < chunkNoiseSections.size(); i++)
+			{
+				ChunkNoiseSection& chunkNoiseSection = chunkNoiseSections.at(i);
+
+				if (chunkNoiseSection.position.x == newPosition.x && chunkNoiseSection.position.z == newPosition.z)
+				{
+					chunkNoiseSectionInd = i;
+				}
+			}
+
+			chunkIndexes[i]->Recreate(chunkNoiseSections.at(chunkNoiseSectionInd).noise, yMin, yMax, newPosition, seed_, false);
 		}
 	}
 	loadingChunksMutex_.unlock();
 	return true;
+}
+
+std::vector<float> World::GetNoiseForChunkSection(int x, int z, int size)
+{
+	auto noiseOutput = std::vector<float>(size * size);
+	fractalNoise_->GenUniformGrid2D(
+		noiseOutput.data(),
+		x,
+		z,
+		size,
+		size,
+		0.01f,
+		seed_
+	);
+
+	return noiseOutput;
 }
