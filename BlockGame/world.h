@@ -23,8 +23,8 @@ class World
 	WorldWorker* worldWorker_;
 	std::mutex loadingChunksMutex_;
 	std::mutex generatingNoiseMutex_;
-	int yMin = 0;
-	int yMax = 3;
+	int yMin = 0; // num. chunks
+	int yMax = 3; // num. chunks (i.e. max - min would be the number of chunks high)
 public:
 	World(glm::vec3 currentPlayerPos, int renderDistance);
 
