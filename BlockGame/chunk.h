@@ -32,17 +32,17 @@ class Chunk : public Entity
 
 	std::atomic<bool> isUnloaded{false};
 protected:
-	void UseNoise(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator);
+	void UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY);
 	void GenerateMesh(bool isOnMainThread = true);
 
 	bool IsInChunk(int x, int y, int z);
 public:
-	Chunk(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator, glm::vec3 startingPosition, int size, int seed);
+	Chunk(std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed);
 
 	void Draw();
 
 	void Unload();
-	void Recreate(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator, glm::vec3 newStartingPosition, int seed, bool isOnMainThread = true);
+	void Recreate(std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 newStartingPosition, int seed, bool isOnMainThread = true);
 
 	void Update() override;
 };

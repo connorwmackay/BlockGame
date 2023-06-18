@@ -6,7 +6,7 @@
 #include "meshComponent.h"
 #include "transformComponent.h"
 
-Chunk::Chunk(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator, glm::vec3 startingPosition, int size, int seed)
+Chunk::Chunk(std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed)
 	: Entity()
 {
 	size_.store(size);
@@ -16,7 +16,7 @@ Chunk::Chunk(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerat
 
 	AddComponent("transform", new TransformComponent(this, startingPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
 	transformComponent = static_cast<TransformComponent*>(GetComponentByName("transform"));
-	UseNoise(noiseGenerator.load());
+	UseNoise(chunkSectionNoise, minY, maxY);
 
 	TextureData textureData = Texture::LoadTextureDataFromFile("./Assets/textureAtlas.png");
 	texture_ = new Texture2D(textureData, GL_TEXTURE_2D, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST);
@@ -335,7 +335,7 @@ void Chunk::Draw()
 	}
 }
 
-void Chunk::UseNoise(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator)
+void Chunk::UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY)
 {
 	std::vector<std::vector<std::vector<uint8_t>>> blocks = std::vector<std::vector<std::vector<uint8_t>>>();
 
@@ -347,19 +347,6 @@ void Chunk::UseNoise(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> nois
 
 	glm::vec3 position = transformComponent->GetTranslation();
 
-	// Fill the blocks_ container using noise
-	std::vector<float> simplexNoiseOutput(size_.load() * size_.load());
-	auto noise = noiseGenerator.load();
-	noise->get()->GenUniformGrid2D(
-		simplexNoiseOutput.data(),
-		(int)glm::floor(position.x),
-		(int)glm::floor(position.z),
-		size_.load(),
-		size_.load(),
-		0.02f,
-		seed_.load()
-	);
-
 	int currentBlockIndex = 0;
 	int currentNoiseIndex = 0;
 	for (int z = 0; z < size_.load(); z++)
@@ -370,23 +357,25 @@ void Chunk::UseNoise(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> nois
 		{
 			std::vector<uint8_t> xRow = std::vector<uint8_t>();
 
-			float currentNoiseVal = simplexNoiseOutput[currentNoiseIndex];
-
-			int yHeight = 8 + (currentNoiseVal * size_.load() /2);
+			float currentNoiseVal = chunkSectionNoise[currentNoiseIndex];
+			float ySize = glm::abs(maxY - minY) * size_;
+			float ySurface = (ySize / 2) + (currentNoiseVal * ySize / 2);
 
 			for (int y = 0; y < size_.load(); y++)
 			{
 				uint8_t currentBlock = BLOCK_TYPE_AIR;
 
-				if (y < yHeight && y >= (yHeight-3))
+				float currentY = position.y + (float)y;
+
+				if ((int)currentY < (int)ySurface)
 				{
 					currentBlock = BLOCK_TYPE_DIRT;
 				}
-				else if (y < yHeight-3)
+				else if ((int)currentY > (int)ySurface)
 				{
-					currentBlock = BLOCK_TYPE_STONE;
+					currentBlock = BLOCK_TYPE_AIR;
 				}
-				else if (y == yHeight)
+				else
 				{
 					currentBlock = BLOCK_TYPE_GRASS;
 				}
@@ -394,10 +383,8 @@ void Chunk::UseNoise(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> nois
 				xRow.push_back(currentBlock);
 				currentBlockIndex++;
 			}
-
-			zRow.push_back(xRow);
-
 			currentNoiseIndex++;
+			zRow.push_back(xRow);
 		}
 
 		blocks.push_back(zRow);
@@ -412,12 +399,12 @@ void Chunk::Unload()
 	isUnloaded.store(true);
 }
 
-void Chunk::Recreate(std::atomic<FastNoise::SmartNode<FastNoise::Simplex>*> noiseGenerator, glm::vec3 newStartingPosition, int seed, bool isOnMainThread)
+void Chunk::Recreate(std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 newStartingPosition, int seed, bool isOnMainThread)
 {
 	seed_.store(seed);
 	blocks_.clear();
 	transformComponent->SetTranslation(newStartingPosition);
-	UseNoise(noiseGenerator.load());
+	UseNoise(chunkSectionNoise, minY, maxY);
 	GenerateMesh(isOnMainThread);
 	isUnloaded.store(false);
 }

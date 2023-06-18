@@ -82,8 +82,6 @@ void Game::Run()
 
 	stbi_set_flip_vertically_on_load(false);
 
-	auto fastNoiseSimplex = FastNoise::New<FastNoise::Simplex>();
-
 	srand(time(NULL));
 	int seed = rand();
 
@@ -93,7 +91,7 @@ void Game::Run()
 	glfwGetWindowSize(window, &width, &height);
 	perspective = glm::perspective(glm::radians(60.0f), (GLfloat)((float)width / (float)height), 0.1f, 400.0f);
 
-	World world = World(glm::vec3(0.0f, 0.0f, 0.0f), 10);
+	World world = World(glm::vec3(0.0f, 0.0f, 0.0f), 5);
 
 	glm::mat4 oldView = glm::mat4(1.0f);
 	for (Chunk* chunk : world.GetWorld())
@@ -106,19 +104,6 @@ void Game::Run()
 
 	FreeFormController freeFormController = FreeFormController(window, glm::vec3(0.0f, 16.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	freeFormController.Start();
-
-	bool hasRegenerated = false;
-
-	auto regenerate = [](FastNoise::SmartNode<FastNoise::Simplex>& noise, World& world, int seed)
-	{
-		for (Chunk* chunk : world.GetWorld())
-		{
-			TransformComponent* transformComponent = static_cast<TransformComponent*>(chunk->GetComponentByName("transform"));
-			if (transformComponent) {
-				chunk->Recreate(&noise, transformComponent->GetTranslation(), seed, false);
-			}
-		}
-	};
 
 	TransformComponent* freeFormTransform = static_cast<TransformComponent*>(freeFormController.GetComponentByName("transform"));
 
@@ -153,30 +138,6 @@ void Game::Run()
 
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
-		}
-
-		/*
-		 * Regenerates the world using another randomly chosen seed.
-		 */
-		if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS && !hasRegenerated)
-		{
-			srand(time(NULL));
-			seed = rand();
-
-			for (Chunk* chunk : world.GetWorld())
-			{
-				chunk->Unload();
-			}
-
-			regenerateThread = std::thread(regenerate, std::ref(fastNoiseSimplex), std::ref(world), seed);
-			regenerateThread.detach();
-
-			hasRegenerated = true;
-		}
-
-		if (glfwGetKey(window, GLFW_KEY_G) == GLFW_RELEASE && hasRegenerated)
-		{
-			hasRegenerated = false;
 		}
 
 		glClearColor(0.0f, 0.3f, 0.5f, 1.0f);
