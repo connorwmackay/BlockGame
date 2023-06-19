@@ -4,6 +4,7 @@
 
 #include "logging.h"
 #include <unordered_map>
+#include <GLFW/glfw3.h>
 
 World::World(glm::vec3 currentPlayerPos, int renderDistance)
 {
@@ -46,8 +47,9 @@ void World::Update(glm::vec3 currentPlayerPos)
 	int newZ = World::FindClosestPosition(currentPlayerPos.z, 16);
 	int newX = World::FindClosestPosition(currentPlayerPos.x, 16);
 
-	if ((oldZ != newZ || oldX != newX))
+	if ((oldZ != newZ || oldX != newX) && worldWorker_->AreAnyThreadsAvailable())
 	{
+		// Load the new chunks asynchronously
 		int startZ = newZ - (int)(16 * glm::floor(renderDistance_));
 		int startX = newX - (int)(16 * glm::floor(renderDistance_));
 		int endZ = newZ + (int)(16 * glm::floor(renderDistance_));
@@ -78,10 +80,7 @@ void World::Update(glm::vec3 currentPlayerPos)
 			}
 		}
 
-		// Load the new chunks asynchronously
-		if (worldWorker_->AreAnyThreadsAvailable()) {
-			worldWorker_->QueueFunction({ &World::LoadNewChunksAsync, this, startX, endX, startZ, endZ, loadedChunkPositions, unloadedChunks });
-		}
+		worldWorker_->QueueFunction({ &World::LoadNewChunksAsync, this, startX, endX, startZ, endZ, loadedChunkPositions, unloadedChunks });
 	}
 
 	lastKnownPlayerPos_ = currentPlayerPos;
@@ -109,6 +108,7 @@ int World::FindClosestPosition(int val, int multiple)
 
 bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::vector<glm::vec3> loadedChunkPositions, std::vector<Chunk*> chunkIndexes)
 {
+	float createNoiseStartTime = glfwGetTime();
 	std::vector<glm::vec3> positionsToLoad = std::vector<glm::vec3>();
 	std::vector<ChunkNoiseSection> chunkNoiseSections = std::vector<ChunkNoiseSection>();
 
@@ -165,7 +165,10 @@ bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::
 			}
 		}
 	}
+	float createNoiseEndTime = glfwGetTime();
+	LOG("Create Noise Time: %fms\n", (createNoiseEndTime - createNoiseStartTime) * 1000);
 
+	float recreateChunksStartTime = glfwGetTime();
 	for (int i = 0; i < chunkIndexes.size(); i++)
 	{
 		if (positionsToLoad.size() > 0) {
@@ -187,6 +190,9 @@ bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::
 			chunkIndexes[i]->Recreate(chunkNoiseSections.at(chunkNoiseSectionInd).noise, yMin, yMax, newPosition, seed_, false);
 		}
 	}
+	float recreateChunksEndTime = glfwGetTime();
+	LOG("Recreate Chunks Time: %fms\n", (recreateChunksEndTime - recreateChunksStartTime) * 1000);
+
 	return true;
 }
 

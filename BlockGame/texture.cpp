@@ -79,7 +79,7 @@ Texture2D::Texture2D(TextureData textureData, GLenum textureTarget, GLint textur
 	glGenerateMipmap(textureTarget_);
 }
 
-SubTexture GetSubTextureFromTextureAtlas(int rowInd, int colInd, TextureAtlas const& textureAtlas)
+SubTexture GetSubTextureFromTextureAtlas(int const& rowInd, int const& colInd, TextureAtlas const& textureAtlas)
 {
 	SubTexture subTexture{};
 
@@ -104,4 +104,14 @@ SubTexture GetSubTextureFromTextureAtlas(int rowInd, int colInd, TextureAtlas co
 	subTexture.endT = static_cast<float>(rowInd) * heightPerSubTex;
 
 	return subTexture;
+}
+
+std::vector<SubTexture> GetSubTexturesOfRowFromTextureAtlas(int const& rowInd, TextureAtlas const& textureAtlas) {
+	auto subTextures = std::vector<SubTexture>();
+	
+	for (int i = 0; i < textureAtlas.numCols; i++) {
+		subTextures.push_back(GetSubTextureFromTextureAtlas(rowInd, i, textureAtlas));
+	}
+
+	return subTextures;
 }

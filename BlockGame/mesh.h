@@ -54,8 +54,8 @@ public:
 	void AddFace(std::vector<Vertex> vertices);
 	void AddFace(std::vector<unsigned int> indices);
 
-	void SetVertices(std::vector<Vertex> vertices);
-	void SetIndices(std::vector<unsigned int> indices);
+	void SetVertices(std::vector<Vertex>& vertices);
+	void SetIndices(std::vector<unsigned int>& indices);
 
 	int GetNumVertices();
 

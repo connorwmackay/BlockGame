@@ -1,6 +1,7 @@
 #pragma once
 #include <glad/glad.h>
 #include <stb_image.h>
+#include <vector>
 
 struct TextureData
 {
@@ -60,4 +61,5 @@ struct SubTexture
 	float endT;
 };
 
-SubTexture GetSubTextureFromTextureAtlas(int rowInd, int colInd, TextureAtlas const& textureAtlas);
+SubTexture GetSubTextureFromTextureAtlas(int const& rowInd, int const& colInd, TextureAtlas const& textureAtlas);
+std::vector<SubTexture> GetSubTexturesOfRowFromTextureAtlas(int const& rowInd, TextureAtlas const& textureAtlas);

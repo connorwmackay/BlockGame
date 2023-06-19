@@ -31,6 +31,12 @@ class Chunk : public Entity
 	TransformComponent* transformComponent;
 
 	std::atomic<bool> isUnloaded{false};
+
+	// Get all the subtextures once, so the calculation
+	// only needs to happen once, when a chunk is created.
+	std::vector<SubTexture> grassSubTextures_;
+	std::vector<SubTexture> dirtSubTextures_;
+	std::vector<SubTexture> stoneSubTextures_;
 protected:
 	void UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY);
 	void GenerateMesh(bool isOnMainThread = true);

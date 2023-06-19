@@ -118,13 +118,13 @@ void Mesh::AddFace(std::vector<Vertex> vertices)
 	shouldUpdateOnGPU.store(true);
 }
 
-void Mesh::SetVertices(std::vector<Vertex> vertices)
+void Mesh::SetVertices(std::vector<Vertex>& vertices)
 {
 	vertices_ = vertices;
 	shouldUpdateOnGPU.store(true);
 }
 
-void Mesh::SetIndices(std::vector<unsigned int> indices)
+void Mesh::SetIndices(std::vector<unsigned int>& indices)
 {
 	indices_ = indices;
 	shouldUpdateOnGPU.store(true);

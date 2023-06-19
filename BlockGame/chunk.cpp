@@ -24,6 +24,11 @@ Chunk::Chunk(std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3
 
 	AddComponent("mesh", new MeshComponent(this, new Mesh(texture_)));
 	meshComponent = static_cast<MeshComponent*>(GetComponentByName("mesh"));
+	TextureAtlas textureAtlas = { 3, 6 };
+
+	grassSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(0, textureAtlas);
+	dirtSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(1, textureAtlas);
+	stoneSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(2, textureAtlas);
 
 	GenerateMesh();
 }
@@ -37,16 +42,14 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 	float meshStartY = -1.0f * (size_.load() / 2.0f);
 	float meshStartZ = -1.0f * (size_.load() / 2.0f);
 
-	TextureAtlas textureAtlas = { 3, 6 };
-
 	int numBlocksRendered = 0;
 
 	// We want to declare this inside the function because
 	// chunks can be called on other threads, therefore
 	// it's better just to replace the vertices and indices
 	// on the mesh rather than pass them between classes etc.
-	std::vector<Vertex> vertices = std::vector<Vertex>();
-	std::vector<unsigned int> indices = std::vector<unsigned int>();
+	std::vector<Vertex> vertices = std::vector<Vertex>(blocks_.size() * 4 * 6);
+	std::vector<unsigned int> indices = std::vector<unsigned int>(blocks_.size() * 6 * 6);
 
 	for (int z = 0; z < size_.load(); z++)
 	{
@@ -102,26 +105,24 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 					float meshY = meshStartY + y;
 					float meshZ = meshStartZ + z;
 
-					int subTextureRow, subTextureCol;
-					switch(currentBlock)
-					{
-					case BLOCK_TYPE_GRASS:
-						subTextureRow = 0;
-						break;
-					case BLOCK_TYPE_DIRT:
-						subTextureRow = 1;
-						break;
-					case BLOCK_TYPE_STONE:
-						subTextureRow = 2;
-						break;
-					}
-
 					// Add each block face that faces an air block
 					if (adjacentBlockUp == BLOCK_TYPE_AIR)
 					{
-						subTextureCol = 0;
+						int subTextureCol = 0;
+						SubTexture subTexture;
 
-						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
+						switch (currentBlock)
+						{
+						case BLOCK_TYPE_GRASS:
+							subTexture = grassSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_DIRT:
+							subTexture = dirtSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_STONE:
+							subTexture = stoneSubTextures_.at(subTextureCol);
+							break;
+						}
 
 						vertices.push_back({ meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
 						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
@@ -144,9 +145,22 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockDown == BLOCK_TYPE_AIR)
 					{
-						subTextureCol = 1;
+						int subTextureCol = 1;
 
-						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
+						SubTexture subTexture;
+
+						switch (currentBlock)
+						{
+						case BLOCK_TYPE_GRASS:
+							subTexture = grassSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_DIRT:
+							subTexture = dirtSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_STONE:
+							subTexture = stoneSubTextures_.at(subTextureCol);
+							break;
+						}
 
 						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
 						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
@@ -169,9 +183,22 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockRight == BLOCK_TYPE_AIR)
 					{
-						subTextureCol = 2;
+						int subTextureCol = 2;
 
-						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
+						SubTexture subTexture;
+
+						switch (currentBlock)
+						{
+						case BLOCK_TYPE_GRASS:
+							subTexture = grassSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_DIRT:
+							subTexture = dirtSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_STONE:
+							subTexture = stoneSubTextures_.at(subTextureCol);
+							break;
+						}
 
 						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
 						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
@@ -194,9 +221,22 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockLeft == BLOCK_TYPE_AIR)
 					{
-						subTextureCol = 3;
+						int subTextureCol = 3;
 
-						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
+						SubTexture subTexture;
+
+						switch (currentBlock)
+						{
+						case BLOCK_TYPE_GRASS:
+							subTexture = grassSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_DIRT:
+							subTexture = dirtSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_STONE:
+							subTexture = stoneSubTextures_.at(subTextureCol);
+							break;
+						}
 
 						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
 						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
@@ -219,9 +259,22 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockFront == BLOCK_TYPE_AIR)
 					{
-						subTextureCol = 4;
+						int subTextureCol = 4;
 
-						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
+						SubTexture subTexture;
+
+						switch (currentBlock)
+						{
+						case BLOCK_TYPE_GRASS:
+							subTexture = grassSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_DIRT:
+							subTexture = dirtSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_STONE:
+							subTexture = stoneSubTextures_.at(subTextureCol);
+							break;
+						}
 
 						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
 						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
@@ -244,9 +297,22 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockBack == BLOCK_TYPE_AIR)
 					{
-						subTextureCol = 5;
+						int subTextureCol = 5;
 
-						SubTexture subTexture = GetSubTextureFromTextureAtlas(subTextureRow, subTextureCol, textureAtlas);
+						SubTexture subTexture;
+
+						switch (currentBlock)
+						{
+						case BLOCK_TYPE_GRASS:
+							subTexture = grassSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_DIRT:
+							subTexture = dirtSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_STONE:
+							subTexture = stoneSubTextures_.at(subTextureCol);
+							break;
+						}
 
 						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.startT }); // Bottom-Left
 						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
