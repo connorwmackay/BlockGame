@@ -3,6 +3,8 @@ This is my attempt at making a Minecraft clone using OpenGL and C++. My previous
 
 As this is still in active development, expect the performance to be sub-optimal, I still have a lot of performance improvements to make. (Loading chunks is much faster in release build mode since vectors have really bad debug build performance.) 
 
+You see a board of planned features here: https://trello.com/b/FBFUMqoR/blockgame
+
 ![Screenshot of the game running on Windows](screenshot.png)
 
 # Current Features
@@ -12,27 +14,6 @@ As this is still in active development, expect the performance to be sub-optimal
 - Free-form controller (doesn't have delta time yet so speed depends on frame-rate)
 - Seamless terrain using simplex noise (appears like hilly grassland)
 - ImGui is integrated
-
-# Planned Features
-
-- General performance improvements **(High priority)**
-  - Occlusion culling
-  - Back-face culling (will need to change order of indices in mesh class)
-  - Don't add faces to a chunk mesh that aren't visible (currently adds the chunks edge faces)
-  - Improved chunk mesh generation speed
-- Biomes **(High priority)**
-  - Grassland
-  - Desert
-  - Forest
-  - Snow
-- Skybox **(Medium Priority)**
-- Fog at the end of the player's render distance **(Medium Priority)**
-- Player controller (with gravity and collision) **(Low priority)**
-- Directional light **(Medium Priority)**
-
-- Switch to using CMake and automatically download dependencies on Windows **(Low Priority)**
-- Caves **(Very Low Priority)**
-  - Surface entrances
 
 # How to Use This Project
 This project uses Visual Studio 2022 and has only been tested on Windows.
