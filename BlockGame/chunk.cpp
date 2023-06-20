@@ -6,13 +6,14 @@
 #include "meshComponent.h"
 #include "transformComponent.h"
 
-Chunk::Chunk(std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed)
+Chunk::Chunk(Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed)
 	: Entity()
 {
 	size_.store(size);
 	blocks_ = std::vector<std::vector<std::vector<uint8_t>>>();
 	seed_.store(seed);
 	isUnloaded.store(false);
+	biome_ = biome;
 
 	AddComponent("transform", new TransformComponent(this, startingPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
 	transformComponent = static_cast<TransformComponent*>(GetComponentByName("transform"));
@@ -24,11 +25,13 @@ Chunk::Chunk(std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3
 
 	AddComponent("mesh", new MeshComponent(this, new Mesh(texture_)));
 	meshComponent = static_cast<MeshComponent*>(GetComponentByName("mesh"));
-	TextureAtlas textureAtlas = { 3, 6 };
+	TextureAtlas textureAtlas = { 5, 6 };
 
 	grassSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(0, textureAtlas);
 	dirtSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(1, textureAtlas);
 	stoneSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(2, textureAtlas);
+	sandSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(3, textureAtlas);
+	snowSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(4, textureAtlas);
 
 	GenerateMesh();
 }
@@ -122,6 +125,12 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 						case BLOCK_TYPE_STONE:
 							subTexture = stoneSubTextures_.at(subTextureCol);
 							break;
+						case BLOCK_TYPE_SAND:
+							subTexture = sandSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_SNOW:
+							subTexture = snowSubTextures_.at(subTextureCol);
+							break;
 						}
 
 						vertices.push_back({ meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
@@ -159,6 +168,12 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 							break;
 						case BLOCK_TYPE_STONE:
 							subTexture = stoneSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_SAND:
+							subTexture = sandSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_SNOW:
+							subTexture = snowSubTextures_.at(subTextureCol);
 							break;
 						}
 
@@ -198,6 +213,12 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 						case BLOCK_TYPE_STONE:
 							subTexture = stoneSubTextures_.at(subTextureCol);
 							break;
+						case BLOCK_TYPE_SAND:
+							subTexture = sandSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_SNOW:
+							subTexture = snowSubTextures_.at(subTextureCol);
+							break;
 						}
 
 						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
@@ -235,6 +256,12 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 							break;
 						case BLOCK_TYPE_STONE:
 							subTexture = stoneSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_SAND:
+							subTexture = sandSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_SNOW:
+							subTexture = snowSubTextures_.at(subTextureCol);
 							break;
 						}
 
@@ -274,6 +301,12 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 						case BLOCK_TYPE_STONE:
 							subTexture = stoneSubTextures_.at(subTextureCol);
 							break;
+						case BLOCK_TYPE_SAND:
+							subTexture = sandSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_SNOW:
+							subTexture = snowSubTextures_.at(subTextureCol);
+							break;
 						}
 
 						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
@@ -311,6 +344,12 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 							break;
 						case BLOCK_TYPE_STONE:
 							subTexture = stoneSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_SAND:
+							subTexture = sandSubTextures_.at(subTextureCol);
+							break;
+						case BLOCK_TYPE_SNOW:
+							subTexture = snowSubTextures_.at(subTextureCol);
 							break;
 						}
 
@@ -413,6 +452,35 @@ void Chunk::UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY)
 
 	glm::vec3 position = transformComponent->GetTranslation();
 
+	// Default values
+	uint8_t surfaceBlock = BLOCK_TYPE_GRASS;
+	uint8_t subSurfaceBlockHigh = BLOCK_TYPE_DIRT;
+	uint8_t subSurfaceBlockLow = BLOCK_TYPE_STONE;
+
+	switch(biome_)
+	{
+	case Biome::Desert:
+		surfaceBlock = BLOCK_TYPE_SAND;
+		subSurfaceBlockHigh = BLOCK_TYPE_SAND;
+		subSurfaceBlockLow = BLOCK_TYPE_SAND;
+		break;
+	case Biome::Grassland:
+		surfaceBlock = BLOCK_TYPE_GRASS;
+		subSurfaceBlockHigh = BLOCK_TYPE_DIRT;
+		subSurfaceBlockLow = BLOCK_TYPE_STONE;
+		break;
+	case Biome::Snow:
+		surfaceBlock = BLOCK_TYPE_SNOW;
+		subSurfaceBlockHigh = BLOCK_TYPE_DIRT;
+		subSurfaceBlockLow = BLOCK_TYPE_STONE;
+		break;
+	case Biome::Rock:
+		surfaceBlock = BLOCK_TYPE_STONE;
+		subSurfaceBlockHigh = BLOCK_TYPE_STONE;
+		subSurfaceBlockLow = BLOCK_TYPE_STONE;
+		break;
+	}
+
 	int currentBlockIndex = 0;
 	int currentNoiseIndex = 0;
 	for (int z = 0; z < size_.load(); z++)
@@ -433,9 +501,13 @@ void Chunk::UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY)
 
 				float currentY = position.y + (float)y;
 
-				if ((int)currentY < (int)ySurface)
+				if ((int)currentY < (int)ySurface && currentY > (int)ySurface - 3)
 				{
-					currentBlock = BLOCK_TYPE_DIRT;
+					currentBlock = subSurfaceBlockHigh;
+				}
+				else if ((int)currentY < (int)ySurface)
+				{
+					currentBlock = subSurfaceBlockLow;
 				}
 				else if ((int)currentY > (int)ySurface)
 				{
@@ -443,7 +515,7 @@ void Chunk::UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY)
 				}
 				else
 				{
-					currentBlock = BLOCK_TYPE_GRASS;
+					currentBlock = surfaceBlock;
 				}
 
 				xRow.push_back(currentBlock);
@@ -465,10 +537,11 @@ void Chunk::Unload()
 	isUnloaded.store(true);
 }
 
-void Chunk::Recreate(std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 newStartingPosition, int seed, bool isOnMainThread)
+void Chunk::Recreate(Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 newStartingPosition, int seed, bool isOnMainThread)
 {
 	seed_.store(seed);
 	blocks_.clear();
+	biome_ = biome;
 	transformComponent->SetTranslation(newStartingPosition);
 	UseNoise(chunkSectionNoise, minY, maxY);
 	GenerateMesh(isOnMainThread);

@@ -15,6 +15,16 @@
 #define BLOCK_TYPE_GRASS 1
 #define BLOCK_TYPE_DIRT 2
 #define BLOCK_TYPE_STONE 3
+#define BLOCK_TYPE_SAND 4
+#define BLOCK_TYPE_SNOW 5
+
+enum class Biome
+{
+	Snow,
+	Grassland,
+	Desert,
+	Rock
+};
 
 class Chunk : public Entity
 {
@@ -37,18 +47,22 @@ class Chunk : public Entity
 	std::vector<SubTexture> grassSubTextures_;
 	std::vector<SubTexture> dirtSubTextures_;
 	std::vector<SubTexture> stoneSubTextures_;
+	std::vector<SubTexture> sandSubTextures_;
+	std::vector<SubTexture> snowSubTextures_;
+
+	Biome biome_;
 protected:
 	void UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY);
 	void GenerateMesh(bool isOnMainThread = true);
 
 	bool IsInChunk(int x, int y, int z);
 public:
-	Chunk(std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed);
+	Chunk(Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed);
 
 	void Draw();
 
 	void Unload();
-	void Recreate(std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 newStartingPosition, int seed, bool isOnMainThread = true);
+	void Recreate(Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 newStartingPosition, int seed, bool isOnMainThread = true);
 
 	void Update() override;
 };

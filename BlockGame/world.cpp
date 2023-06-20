@@ -13,11 +13,25 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 	renderDistance_ = renderDistance;
 
 	auto fastNoiseSimplex = FastNoise::New<FastNoise::Simplex>();
-	fractalNoise_ = FastNoise::New<FastNoise::FractalFBm>();
-	fractalNoise_->SetSource(fastNoiseSimplex);
-	fractalNoise_->SetOctaveCount(2);
-	fractalNoise_->SetLacunarity(0);
-	fractalNoise_->SetGain(0.5f);
+	terrainNoise_ = FastNoise::New<FastNoise::FractalFBm>();
+	terrainNoise_->SetSource(fastNoiseSimplex);
+	terrainNoise_->SetOctaveCount(3);
+	terrainNoise_->SetLacunarity(1);
+	terrainNoise_->SetGain(0.5f);
+
+	auto heightScaleNoiseSimplex = FastNoise::New<FastNoise::Simplex>();
+	heightScaleNoise_ = FastNoise::New<FastNoise::FractalFBm>();
+	heightScaleNoise_->SetSource(heightScaleNoiseSimplex);
+	heightScaleNoise_->SetOctaveCount(1);
+	heightScaleNoise_->SetLacunarity(1);
+	heightScaleNoise_->SetGain(1.0f);
+
+	auto temperatureNoiseSimplex = FastNoise::New<FastNoise::Simplex>();
+	temperatureNoise_ = FastNoise::New<FastNoise::FractalFBm>();
+	temperatureNoise_->SetSource(fastNoiseSimplex);
+	temperatureNoise_->SetOctaveCount(1);
+	temperatureNoise_->SetLacunarity(2);
+	temperatureNoise_->SetGain(1.0f);
 
 	worldWorker_ = new WorldWorker(1);
 
@@ -32,7 +46,9 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 			std::vector<float> chunkSectionNoise = GetNoiseForChunkSection(startX + x * 16.0f, startZ + z * 16.0f, 16);
 
 			for (int y = yMin; y <= yMax; y++) {
-				chunks_.push_back(new Chunk(chunkSectionNoise, yMin, yMax, glm::vec3(startX + (x * 16.0f), y * 16.0f, startZ + (z * 16.0f)), 16, seed_));
+				float temperature = 0.0f;
+				temperatureNoise_->GenUniformGrid2D(&temperature, (startX + x * 16.0f)/16.0f, (startZ + z * 16.0f)/16.0f, 1, 1, 0.05f, seed_);
+				chunks_.push_back(new Chunk(World::GetBiomeFromTemperature(temperature), chunkSectionNoise, yMin, yMax, glm::vec3(startX + (x * 16.0f), y * 16.0f, startZ + (z * 16.0f)), 16, seed_));
 			}
 		}
 	}
@@ -187,7 +203,9 @@ bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::
 				}
 			}
 
-			chunkIndexes[i]->Recreate(chunkNoiseSections.at(chunkNoiseSectionInd).noise, yMin, yMax, newPosition, seed_, false);
+			float temperature = 0.0f;
+			temperatureNoise_->GenUniformGrid2D(&temperature, newPosition.x/16.0f, newPosition.z/16.0f, 1, 1, 0.05f, seed_);
+			chunkIndexes[i]->Recreate(GetBiomeFromTemperature(temperature), chunkNoiseSections.at(chunkNoiseSectionInd).noise, yMin, yMax, newPosition, seed_, false);
 		}
 	}
 	float recreateChunksEndTime = glfwGetTime();
@@ -198,9 +216,10 @@ bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::
 
 std::vector<float> World::GetNoiseForChunkSection(int x, int z, int size)
 {
-	auto noiseOutput = std::vector<float>(size * size);
-	fractalNoise_->GenUniformGrid2D(
-		noiseOutput.data(),
+	auto terrainNoiseOutput = std::vector<float>(size * size);
+	auto heightScaleNoiseOutput = std::vector<float>(size * size);
+	terrainNoise_->GenUniformGrid2D(
+		terrainNoiseOutput.data(),
 		x,
 		z,
 		size,
@@ -209,5 +228,53 @@ std::vector<float> World::GetNoiseForChunkSection(int x, int z, int size)
 		seed_
 	);
 
-	return noiseOutput;
+	heightScaleNoise_->GenUniformGrid2D(
+		heightScaleNoiseOutput.data(),
+		x,
+		z,
+		size,
+		size,
+		0.01f,
+		seed_
+	);
+
+	std::vector<float> combinedNoise = std::vector<float>();
+
+	int currentNoiseIndex = 0;
+	for (int z=0; z < 16; z++)
+	{
+		for (int x=0; x < 16; x++)
+		{
+			float heightScaled = heightScaleNoiseOutput.at(currentNoiseIndex);
+			heightScaled += 1.0f;
+			heightScaled /= 2.0f;
+
+			float noiseVal = terrainNoiseOutput.at(currentNoiseIndex) * heightScaled;
+			combinedNoise.push_back(noiseVal);
+
+			currentNoiseIndex++;
+		}
+	}
+
+	return combinedNoise;
+}
+
+Biome World::GetBiomeFromTemperature(float temperature)
+{
+	Biome biome = Biome::Grassland;
+
+	if (temperature <= -0.7f)
+	{
+		biome = Biome::Snow;
+	}
+	else if (temperature > -0.7f && temperature <= -0.3f)
+	{
+		biome = Biome::Grassland;
+	}
+	else
+	{
+		biome = Biome::Desert;
+	}
+
+	return biome;
 }

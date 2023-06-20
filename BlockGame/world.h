@@ -17,14 +17,19 @@ class World
 	glm::vec3 lastKnownPlayerPos_;
 	std::vector<Chunk*> chunks_;
 
-	FastNoise::SmartNode<FastNoise::FractalFBm> fractalNoise_;
+	FastNoise::SmartNode<FastNoise::FractalFBm> terrainNoise_;
+	FastNoise::SmartNode<FastNoise::FractalFBm> heightScaleNoise_;
+	FastNoise::SmartNode<FastNoise::FractalFBm> temperatureNoise_;
+
 	int seed_;
 	int renderDistance_;
 	WorldWorker* worldWorker_;
 	std::mutex loadingChunksMutex_;
 	std::mutex generatingNoiseMutex_;
 	int yMin = 0; // num. chunks
-	int yMax = 3; // num. chunks (i.e. max - min would be the number of chunks high)
+	int yMax = 4; // num. chunks (i.e. max - min would be the number of chunks high)
+protected:
+	static Biome GetBiomeFromTemperature(float temperature);
 public:
 	World(glm::vec3 currentPlayerPos, int renderDistance);
 
