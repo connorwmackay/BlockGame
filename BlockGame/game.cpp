@@ -102,7 +102,7 @@ void Game::Run()
 		meshComponent->SetView(oldView);
 	}
 
-	FreeFormController freeFormController = FreeFormController(window, glm::vec3(0.0f, 16.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	FreeFormController freeFormController = FreeFormController(window, glm::vec3(0.0f, 48.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	freeFormController.Start();
 
 	TransformComponent* freeFormTransform = static_cast<TransformComponent*>(freeFormController.GetComponentByName("transform"));
