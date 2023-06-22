@@ -5,7 +5,7 @@ As this is still in active development, expect the performance to be sub-optimal
 
 You see a board of planned features here: https://trello.com/b/FBFUMqoR/blockgame
 
-![Screenshot of the game running on Windows](screenshot.png)
+![Screenshot of the game running on Windows](new-screenshot.png)
 
 # Current Features
 
