@@ -18,8 +18,9 @@ class World
 	std::vector<Chunk*> chunks_;
 
 	FastNoise::SmartNode<FastNoise::FractalFBm> terrainNoise_;
-	FastNoise::SmartNode<FastNoise::FractalFBm> heightScaleNoise_;
+	FastNoise::SmartNode<FastNoise::FractalRidged> heightScaleNoise_;
 	FastNoise::SmartNode<FastNoise::FractalFBm> temperatureNoise_;
+	FastNoise::SmartNode<FastNoise::FractalRidged> insetNoise_;
 
 	int seed_;
 	int renderDistance_;

@@ -15,23 +15,30 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 	auto fastNoiseSimplex = FastNoise::New<FastNoise::Simplex>();
 	terrainNoise_ = FastNoise::New<FastNoise::FractalFBm>();
 	terrainNoise_->SetSource(fastNoiseSimplex);
-	terrainNoise_->SetOctaveCount(3);
+	terrainNoise_->SetOctaveCount(2);
 	terrainNoise_->SetLacunarity(1);
 	terrainNoise_->SetGain(0.5f);
 
 	auto heightScaleNoiseSimplex = FastNoise::New<FastNoise::Simplex>();
-	heightScaleNoise_ = FastNoise::New<FastNoise::FractalFBm>();
+	heightScaleNoise_ = FastNoise::New<FastNoise::FractalRidged>();
 	heightScaleNoise_->SetSource(heightScaleNoiseSimplex);
-	heightScaleNoise_->SetOctaveCount(1);
+	heightScaleNoise_->SetOctaveCount(3);
 	heightScaleNoise_->SetLacunarity(1);
-	heightScaleNoise_->SetGain(1.0f);
+	heightScaleNoise_->SetGain(0.5f);
 
 	auto temperatureNoiseSimplex = FastNoise::New<FastNoise::Simplex>();
 	temperatureNoise_ = FastNoise::New<FastNoise::FractalFBm>();
-	temperatureNoise_->SetSource(fastNoiseSimplex);
+	temperatureNoise_->SetSource(temperatureNoiseSimplex);
 	temperatureNoise_->SetOctaveCount(1);
 	temperatureNoise_->SetLacunarity(2);
 	temperatureNoise_->SetGain(1.0f);
+
+	auto insetNoiseSimplex = FastNoise::New<FastNoise::Simplex>();
+	insetNoise_ = FastNoise::New<FastNoise::FractalRidged>();
+	insetNoise_->SetSource(insetNoiseSimplex);
+	insetNoise_->SetOctaveCount(1);
+	insetNoise_->SetLacunarity(2);
+	insetNoise_->SetGain(1.0f);
 
 	worldWorker_ = new WorldWorker(1);
 
@@ -238,7 +245,7 @@ std::vector<float> World::GetNoiseForChunkSection(int x, int z, int size)
 		seed_
 	);
 
-	std::vector<float> combinedNoise = std::vector<float>();
+	std::vector<float> combined2DNoise = std::vector<float>();
 
 	int currentNoiseIndex = 0;
 	for (int z=0; z < 16; z++)
@@ -250,13 +257,13 @@ std::vector<float> World::GetNoiseForChunkSection(int x, int z, int size)
 			heightScaled /= 2.0f;
 
 			float noiseVal = terrainNoiseOutput.at(currentNoiseIndex) * heightScaled;
-			combinedNoise.push_back(noiseVal);
+			combined2DNoise.push_back(noiseVal);
 
 			currentNoiseIndex++;
 		}
 	}
 
-	return combinedNoise;
+	return combined2DNoise;
 }
 
 Biome World::GetBiomeFromTemperature(float temperature)
