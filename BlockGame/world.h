@@ -27,7 +27,7 @@ class World
 	WorldWorker* worldWorker_;
 	std::mutex loadingChunksMutex_;
 	std::mutex generatingNoiseMutex_;
-	int yMin = 0; // num. chunks
+	int yMin = -1; // num. chunks
 	int yMax = 4; // num. chunks (i.e. max - min would be the number of chunks high)
 protected:
 	static Biome GetBiomeFromTemperature(float temperature);
