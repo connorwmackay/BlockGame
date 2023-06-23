@@ -1,5 +1,5 @@
 # BlockGame
-This is my attempt at making a Minecraft clone using OpenGL and C++. My previous project RemEngine featured infinitely generated  terrain, however it used noise incorrectly and used instancing instead of meshing. This engine uses meshing, where all the visible faces of blocks in a chunk are combined into one mesh and then that mesh is drawn. Additionally, I plan on expanding the world generation beyond just being a infinite 1 chunk high grassland.
+This is my attempt at making a Minecraft clone using OpenGL and C++. My previous project RemEngine featured infinitely generated  terrain, however it used noise incorrectly and used instancing instead of meshing. This engine uses meshing, where all the visible faces of blocks in a chunk are combined into one mesh and then that mesh is drawn.
 
 As this is still in active development, expect the performance to be sub-optimal, I still have a lot of performance improvements to make. (Loading chunks is much faster in release build mode since vectors have really bad debug build performance.) 
 
@@ -13,7 +13,7 @@ You see a board of planned features here: https://trello.com/b/FBFUMqoR/blockgam
 - Grassland, Desert and Snow biomes chosen based on a noise value per chunk that acts as the temperature of the chunk (low temperature creates a snow biome chunk, medium creates grassland, high creates desert). This will be expanded to be more intelligent i.e. take into account other noise-generated paramaters.
 - Basic Entity-Component System (Entities have a list of components that store a reference to their owner allowing interaction between components)
 - Free-form controller (doesn't have delta time yet so speed depends on frame-rate)
-- Seamless terrain using simplex noise (appears like hilly grassland)
+- Seamless terrain with a mix of hills/mountains and flatland.
 - ImGui is integrated
 
 # How to Use This Project
