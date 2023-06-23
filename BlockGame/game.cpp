@@ -125,7 +125,21 @@ void Game::Run()
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		debugInfo.Display();
+		ImGui::SetNextWindowPos(ImVec2(8.0f, 8.0f));
+		ImGui::Begin("Debug Information", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
+			ImGui::SeparatorText("Graphics:");
+			debugInfo.Display();
+			ImGui::SeparatorText("Game Data:");
+			std::stringstream playerPos;
+			playerPos << "Player Pos: (";
+			playerPos << (int)freeFormTransform->GetTranslation().x;
+			playerPos << ", ";
+			playerPos << (int)freeFormTransform->GetTranslation().y;
+			playerPos << ", ";
+			playerPos << (int)freeFormTransform->GetTranslation().z;
+			playerPos << ")";
+			ImGui::Text(playerPos.str().c_str());
+		ImGui::End();
 
 		world.Update(freeFormTransform->GetTranslation());
 
@@ -259,8 +273,6 @@ void DebugInfo::EndFrame()
 
 void DebugInfo::Display()
 {
-	ImGui::Begin("Debug Info", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
-
 	std::stringstream glVersion;
 	glVersion << "OpenGL Version: " << glMajorVersion << "." << glMinorVersion;
 
@@ -283,5 +295,4 @@ void DebugInfo::Display()
 	ImGui::Text(glVersion.str().c_str());
 	ImGui::Text(fpsData.str().c_str());
 	ImGui::Text(vsync.str().c_str());
-	ImGui::End();
 }
