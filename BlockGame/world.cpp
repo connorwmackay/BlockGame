@@ -14,6 +14,9 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 	seed_ = rand();
 	renderDistance_ = renderDistance;
 
+	TreeTrunkPositions = std::vector<glm::vec3>();
+	TreeLeavePositions = std::vector<glm::vec3>();
+
 	// Setup the noise for terrain generation
 	baseMountainTerrainModule_.SetSeed(seed_);
 	baseMountainTerrainModule_.SetOctaveCount(3);
@@ -69,16 +72,33 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 	int startX = World::FindClosestPosition(currentPlayerPos.x, 16) - (16 * glm::floor(renderDistance_-1));
 
 	// Double render distance since it pertains to all sides
+
+	for (int z = 0; z < renderDistance * 2 + 1; z++)
+	{
+		for (int x = 0; x < renderDistance * 2 + 1; x++)
+		{
+			std::vector<float> chunkSectionNoise = GetNoiseForChunkSection(startX + x * 16.0f, startZ + z * 16.0f, 16);
+
+			float temperature = 0.0f;
+			temperatureNoise_->GenUniformGrid2D(&temperature, (startX + x * 16.0f) / 16.0f, (startZ + z * 16.0f) / 16.0f, 1, 1, 0.05f, seed_);
+			Biome biome = World::GetBiomeFromTemperature(temperature);
+
+			SetTreeBlocksForChunk(biome, (startX + x * 16.0f), (startZ + z * 16.0f), yMin, yMax, chunkSectionNoise, 16);
+		}
+	}
 	for (int z = 0; z < renderDistance*2+1; z++)
 	{
 		for (int x = 0; x < renderDistance*2+1; x++)
 		{
 			std::vector<float> chunkSectionNoise = GetNoiseForChunkSection(startX + x * 16.0f, startZ + z * 16.0f, 16);
 
+			float temperature = 0.0f;
+			temperatureNoise_->GenUniformGrid2D(&temperature, (startX + x * 16.0f) / 16.0f, (startZ + z * 16.0f) / 16.0f, 1, 1, 0.05f, seed_);
+			Biome biome = World::GetBiomeFromTemperature(temperature);
+
 			for (int y = yMin; y <= yMax; y++) {
-				float temperature = 0.0f;
-				temperatureNoise_->GenUniformGrid2D(&temperature, (startX + x * 16.0f)/16.0f, (startZ + z * 16.0f)/16.0f, 1, 1, 0.05f, seed_);
-				chunks_.push_back(new Chunk(World::GetBiomeFromTemperature(temperature), chunkSectionNoise, yMin, yMax, glm::vec3(startX + (x * 16.0f), y * 16.0f, startZ + (z * 16.0f)), 16, seed_));
+				
+				chunks_.push_back(new Chunk(this, biome, chunkSectionNoise, yMin, yMax, glm::vec3(startX + (x * 16.0f), y * 16.0f, startZ + (z * 16.0f)), 16, seed_));
 			}
 		}
 	}
@@ -154,6 +174,9 @@ int World::FindClosestPosition(int val, int multiple)
 
 bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::vector<glm::vec3> loadedChunkPositions, std::vector<Chunk*> chunkIndexes)
 {
+	TreeLeavePositions.clear();
+	TreeTrunkPositions.clear();
+
 	float createNoiseStartTime = glfwGetTime();
 	std::vector<glm::vec3> positionsToLoad = std::vector<glm::vec3>();
 	std::vector<ChunkNoiseSection> chunkNoiseSections = std::vector<ChunkNoiseSection>();
@@ -209,8 +232,16 @@ bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::
 			if (shouldAddNoise) {
 				chunkNoiseSections.push_back({ glm::vec3(x, 0, z), GetNoiseForChunkSection(x, z, 16)});
 			}
+
+			float temperature = 0.0f;
+			temperatureNoise_->GenUniformGrid2D(&temperature, x / 16.0f, z / 16.0f, 1, 1, 0.05f, seed_);
+			Biome biome = GetBiomeFromTemperature(temperature);
+
+			std::vector<float> chunkNoiseSection = GetNoiseForChunkSection(x, z, 16);
+			SetTreeBlocksForChunk(biome, x, z, yMin, yMax, chunkNoiseSection, 16);
 		}
 	}
+
 	float createNoiseEndTime = glfwGetTime();
 	LOG("Create Noise Time: %fms\n", (createNoiseEndTime - createNoiseStartTime) * 1000);
 
@@ -279,9 +310,13 @@ Biome World::GetBiomeFromTemperature(float temperature)
 	{
 		biome = Biome::Snow;
 	}
-	else if (temperature > -0.7f && temperature <= -0.3f)
+	else if (temperature > -0.7f && temperature <= -0.1f)
 	{
 		biome = Biome::Grassland;
+	}
+	else if (temperature > -0.1f && temperature <= 0.7f)
+	{
+		biome = Biome::Forest;
 	}
 	else
 	{
@@ -289,4 +324,66 @@ Biome World::GetBiomeFromTemperature(float temperature)
 	}
 
 	return biome;
+}
+
+void World::SetTreeBlocksForChunk(Biome biome, int x, int z, int minY, int maxY, std::vector<float>& chunkSectionNoise, int size)
+{
+	int chunkSectionSeed = seed_ + x + z;
+	srand(chunkSectionSeed);
+
+	int numTrees = rand() % int(size / 2) + 2;
+
+	int lastTreeZ = -1;
+	int lastTreeX = -1;
+
+	int minTreeHeight = 3;
+	int maxTreeHeight = 7;
+
+	int index = 0;
+
+	auto treeTrunkPositions = std::vector<glm::vec3>();
+	auto treeLeavePositions = std::vector<glm::vec3>();
+	for (int currentZ = z; currentZ < z + size; currentZ++)
+	{
+		for (int currentX = x; currentX < x + size; currentX++)
+		{
+			float currentNoiseVal = chunkSectionNoise[index];
+			float ySize = glm::abs(maxY - minY) * size;
+			float ySurface = (ySize / 2) + (currentNoiseVal * ySize / 2);
+			int treeHeight = 0;
+
+			if (glm::abs(currentX - lastTreeX) >= 3 && glm::abs(currentZ - lastTreeZ) >= 3 && biome == Biome::Forest) {
+				int spawnProbability = rand() % 100;
+
+				if (spawnProbability > 20 && numTrees > 0)
+				{
+					treeHeight = rand() % maxTreeHeight + minTreeHeight;
+					lastTreeZ = currentZ;
+					lastTreeX = currentX;
+
+					for (int currentY = ySurface + 1; currentY <= ySurface + treeHeight; currentY++) {
+						treeTrunkPositions.push_back(glm::vec3(currentX, currentY, currentZ));
+					}
+
+					for (int leaveZ = lastTreeZ - 2; leaveZ <= lastTreeZ + 2; leaveZ++)
+					{
+						for (int leaveX = lastTreeX - 2; leaveX <= lastTreeX + 2; leaveX++)
+						{
+							for (int leaveY = (ySurface + treeHeight - 1); leaveY <= (ySurface + treeHeight + 2); leaveY++)
+							{
+								treeLeavePositions.push_back(glm::vec3(leaveX, leaveY, leaveZ));
+							}
+						}
+					}
+
+					numTrees--;
+				}
+			}
+
+			index++;
+		}
+	}
+
+	TreeTrunkPositions.insert(TreeTrunkPositions.end(), treeTrunkPositions.begin(), treeTrunkPositions.end());
+	TreeLeavePositions.insert(TreeLeavePositions.end(), treeLeavePositions.begin(), treeLeavePositions.end());
 }

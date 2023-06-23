@@ -6,9 +6,16 @@
 #include "meshComponent.h"
 #include "transformComponent.h"
 
-Chunk::Chunk(Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed)
+#include <noise/noise.h>
+#include "noiseutils.h"
+
+#include "world.h"
+
+Chunk::Chunk(World* world, Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed)
 	: Entity()
 {
+	world_ = world;
+
 	size_.store(size);
 	blocks_ = std::vector<std::vector<std::vector<uint8_t>>>();
 	seed_.store(seed);
@@ -17,6 +24,10 @@ Chunk::Chunk(Biome biome, std::vector<float> chunkSectionNoise, int minY, int ma
 
 	AddComponent("transform", new TransformComponent(this, startingPosition, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)));
 	transformComponent = static_cast<TransformComponent*>(GetComponentByName("transform"));
+
+	treeTrunkPositions_ = std::vector<glm::vec3>(size * size * size);
+	treeLeavePositions_ = std::vector<glm::vec3>(size * size * size);
+
 	UseNoise(chunkSectionNoise, minY, maxY);
 
 	TextureData textureData = Texture::LoadTextureDataFromFile("./Assets/textureAtlas.png");
@@ -25,20 +36,22 @@ Chunk::Chunk(Biome biome, std::vector<float> chunkSectionNoise, int minY, int ma
 
 	AddComponent("mesh", new MeshComponent(this, new Mesh(texture_)));
 	meshComponent = static_cast<MeshComponent*>(GetComponentByName("mesh"));
-	TextureAtlas textureAtlas = { 5, 6 };
+	TextureAtlas textureAtlas = { 8, 6 };
 
 	grassSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(0, textureAtlas);
 	dirtSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(1, textureAtlas);
 	stoneSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(2, textureAtlas);
 	sandSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(3, textureAtlas);
 	snowSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(4, textureAtlas);
+	forestGrassSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(5, textureAtlas);
+	treeTrunkSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(6, textureAtlas);
+	treeLeavesSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(7, textureAtlas);
 
 	GenerateMesh();
 }
 
 void Chunk::GenerateMesh(bool isOnMainThread)
 {
-
 	Mesh* mesh = meshComponent->GetMesh();
 
 	float meshStartX = -1.0f * (size_.load() / 2.0f);
@@ -111,27 +124,7 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 					// Add each block face that faces an air block
 					if (adjacentBlockUp == BLOCK_TYPE_AIR)
 					{
-						int subTextureCol = 0;
-						SubTexture subTexture;
-
-						switch (currentBlock)
-						{
-						case BLOCK_TYPE_GRASS:
-							subTexture = grassSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_DIRT:
-							subTexture = dirtSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_STONE:
-							subTexture = stoneSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_SAND:
-							subTexture = sandSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_SNOW:
-							subTexture = snowSubTextures_.at(subTextureCol);
-							break;
-						}
+						SubTexture subTexture = GetSubTextureFromBlockAndCol(currentBlock, 0);
 
 						vertices.push_back({ meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
 						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
@@ -154,28 +147,7 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockDown == BLOCK_TYPE_AIR)
 					{
-						int subTextureCol = 1;
-
-						SubTexture subTexture;
-
-						switch (currentBlock)
-						{
-						case BLOCK_TYPE_GRASS:
-							subTexture = grassSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_DIRT:
-							subTexture = dirtSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_STONE:
-							subTexture = stoneSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_SAND:
-							subTexture = sandSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_SNOW:
-							subTexture = snowSubTextures_.at(subTextureCol);
-							break;
-						}
+						SubTexture subTexture = GetSubTextureFromBlockAndCol(currentBlock, 1);
 
 						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
 						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
@@ -198,28 +170,7 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockRight == BLOCK_TYPE_AIR)
 					{
-						int subTextureCol = 2;
-
-						SubTexture subTexture;
-
-						switch (currentBlock)
-						{
-						case BLOCK_TYPE_GRASS:
-							subTexture = grassSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_DIRT:
-							subTexture = dirtSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_STONE:
-							subTexture = stoneSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_SAND:
-							subTexture = sandSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_SNOW:
-							subTexture = snowSubTextures_.at(subTextureCol);
-							break;
-						}
+						SubTexture subTexture = GetSubTextureFromBlockAndCol(currentBlock, 2);
 
 						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
 						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
@@ -242,28 +193,7 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockLeft == BLOCK_TYPE_AIR)
 					{
-						int subTextureCol = 3;
-
-						SubTexture subTexture;
-
-						switch (currentBlock)
-						{
-						case BLOCK_TYPE_GRASS:
-							subTexture = grassSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_DIRT:
-							subTexture = dirtSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_STONE:
-							subTexture = stoneSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_SAND:
-							subTexture = sandSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_SNOW:
-							subTexture = snowSubTextures_.at(subTextureCol);
-							break;
-						}
+						SubTexture subTexture = GetSubTextureFromBlockAndCol(currentBlock, 3);
 
 						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
 						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
@@ -286,28 +216,7 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockFront == BLOCK_TYPE_AIR)
 					{
-						int subTextureCol = 4;
-
-						SubTexture subTexture;
-
-						switch (currentBlock)
-						{
-						case BLOCK_TYPE_GRASS:
-							subTexture = grassSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_DIRT:
-							subTexture = dirtSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_STONE:
-							subTexture = stoneSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_SAND:
-							subTexture = sandSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_SNOW:
-							subTexture = snowSubTextures_.at(subTextureCol);
-							break;
-						}
+						SubTexture subTexture = GetSubTextureFromBlockAndCol(currentBlock, 4);
 
 						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
 						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
@@ -330,28 +239,7 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockBack == BLOCK_TYPE_AIR)
 					{
-						int subTextureCol = 5;
-
-						SubTexture subTexture;
-
-						switch (currentBlock)
-						{
-						case BLOCK_TYPE_GRASS:
-							subTexture = grassSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_DIRT:
-							subTexture = dirtSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_STONE:
-							subTexture = stoneSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_SAND:
-							subTexture = sandSubTextures_.at(subTextureCol);
-							break;
-						case BLOCK_TYPE_SNOW:
-							subTexture = snowSubTextures_.at(subTextureCol);
-							break;
-						}
+						SubTexture subTexture = GetSubTextureFromBlockAndCol(currentBlock, 5);
 
 						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.startT }); // Bottom-Left
 						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
@@ -457,7 +345,7 @@ void Chunk::UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY)
 	uint8_t subSurfaceBlockHigh = BLOCK_TYPE_DIRT;
 	uint8_t subSurfaceBlockLow = BLOCK_TYPE_STONE;
 
-	switch(biome_)
+	switch (biome_)
 	{
 	case Biome::Desert:
 		surfaceBlock = BLOCK_TYPE_SAND;
@@ -479,6 +367,34 @@ void Chunk::UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY)
 		subSurfaceBlockHigh = BLOCK_TYPE_STONE;
 		subSurfaceBlockLow = BLOCK_TYPE_STONE;
 		break;
+	case Biome::Forest:
+		surfaceBlock = BLOCK_TYPE_FORESTGRASS;
+		subSurfaceBlockHigh = BLOCK_TYPE_DIRT;
+		subSurfaceBlockLow = BLOCK_TYPE_STONE;
+		break;
+	}
+
+	auto localTreeTrunkPositions = std::vector<glm::vec3*>();
+	auto localTreeLeavePositions = std::vector<glm::vec3*>();
+	
+	for (glm::vec3& treeLeavePos : world_->TreeLeavePositions)
+	{
+		if (treeLeavePos.x >= position.x && treeLeavePos.x <= position.x + size_ &&
+			treeLeavePos.y >= position.y && treeLeavePos.y <= position.y + size_ &&
+			treeLeavePos.z >= position.z && treeLeavePos.z <= position.z + size_)
+		{
+			localTreeLeavePositions.push_back(&treeLeavePos);
+		}
+	}
+
+	for (glm::vec3& treeTrunkPos : world_->TreeTrunkPositions)
+	{
+		if (treeTrunkPos.x >= position.x && treeTrunkPos.x <= position.x + size_ &&
+			treeTrunkPos.y >= position.y && treeTrunkPos.y <= position.y + size_ &&
+			treeTrunkPos.z >= position.z && treeTrunkPos.z <= position.z + size_)
+		{
+			localTreeTrunkPositions.push_back(&treeTrunkPos);
+		}
 	}
 
 	int currentBlockIndex = 0;
@@ -501,21 +417,43 @@ void Chunk::UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY)
 
 				float currentY = position.y + (float)y;
 
-				if ((int)currentY < (int)ySurface && currentY > (int)ySurface - 3)
+				bool ignoreGenericBlockGen = false;
+
+				for (glm::vec3* treeLeavePos : localTreeLeavePositions)
 				{
-					currentBlock = subSurfaceBlockHigh;
+					if ((int)position.x + x == (int)treeLeavePos->x && (int)position.y + y == (int)treeLeavePos->y && (int)position.z + z == (int)treeLeavePos->z)
+					{
+						currentBlock = BLOCK_TYPE_TREELEAVES;
+						ignoreGenericBlockGen = true;
+					}
 				}
-				else if ((int)currentY < (int)ySurface)
+			
+				for (glm::vec3* treeTrunkPos : localTreeTrunkPositions)
 				{
-					currentBlock = subSurfaceBlockLow;
+					if ((int)position.x + x == (int)treeTrunkPos->x && (int)position.y + y == (int)treeTrunkPos->y && (int)position.z + z == (int)treeTrunkPos->z)
+					{
+						currentBlock = BLOCK_TYPE_TREEBARK;
+						ignoreGenericBlockGen = true;
+					}
 				}
-				else if ((int)currentY > (int)ySurface)
-				{
-					currentBlock = BLOCK_TYPE_AIR;
-				}
-				else
-				{
-					currentBlock = surfaceBlock;
+
+				if (!ignoreGenericBlockGen) {
+					if ((int)currentY < (int)ySurface && currentY >(int)ySurface - 3)
+					{
+						currentBlock = subSurfaceBlockHigh;
+					}
+					else if ((int)currentY < (int)ySurface)
+					{
+						currentBlock = subSurfaceBlockLow;
+					}
+					else if ((int)currentY > (int)ySurface)
+					{
+						currentBlock = BLOCK_TYPE_AIR;
+					}
+					else
+					{
+						currentBlock = surfaceBlock;
+					}
 				}
 
 				xRow.push_back(currentBlock);
@@ -546,4 +484,58 @@ void Chunk::Recreate(Biome biome, std::vector<float> chunkSectionNoise, int minY
 	UseNoise(chunkSectionNoise, minY, maxY);
 	GenerateMesh(isOnMainThread);
 	isUnloaded.store(false);
+}
+
+SubTexture Chunk::GetSubTextureFromBlockAndCol(uint8_t block, int col)
+{
+	SubTexture subTexture{};
+
+	switch (block)
+	{
+	case BLOCK_TYPE_GRASS:
+		subTexture = grassSubTextures_.at(col);
+		break;
+	case BLOCK_TYPE_DIRT:
+		subTexture = dirtSubTextures_.at(col);
+		break;
+	case BLOCK_TYPE_STONE:
+		subTexture = stoneSubTextures_.at(col);
+		break;
+	case BLOCK_TYPE_SAND:
+		subTexture = sandSubTextures_.at(col);
+		break;
+	case BLOCK_TYPE_SNOW:
+		subTexture = snowSubTextures_.at(col);
+		break;
+	case BLOCK_TYPE_FORESTGRASS:
+		subTexture = forestGrassSubTextures_.at(col);
+		break;
+	case BLOCK_TYPE_TREEBARK:
+		subTexture = treeTrunkSubTextures_.at(col);
+		break;
+	case BLOCK_TYPE_TREELEAVES:
+		subTexture = treeLeavesSubTextures_.at(col);
+	}
+
+	return subTexture;
+}
+
+bool Chunk::IsUnloaded()
+{
+	return isUnloaded;
+}
+
+Biome Chunk::GetBiome()
+{
+	return biome_;
+}
+
+void Chunk::AddTreeLeavePositions()
+{
+	world_->TreeLeavePositions.insert(world_->TreeLeavePositions.end(), treeLeavePositions_.begin(), treeLeavePositions_.end());
+}
+
+void Chunk::AddTreeTrunkPositions()
+{
+	world_->TreeTrunkPositions.insert(world_->TreeTrunkPositions.end(), treeTrunkPositions_.begin(), treeTrunkPositions_.end());
 }

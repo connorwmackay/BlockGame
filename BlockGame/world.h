@@ -54,6 +54,8 @@ class World
 protected:
 	static Biome GetBiomeFromTemperature(float temperature);
 public:
+	std::vector<glm::vec3> TreeTrunkPositions;
+	std::vector<glm::vec3> TreeLeavePositions;
 	World(glm::vec3 currentPlayerPos, int renderDistance);
 
 	void Update(glm::vec3 currentPlayerPos);
@@ -64,6 +66,8 @@ public:
 	// Finds the closest position that's a multiple of the passed
 	// parameter, i.e. closest x pos for a multiple of 16
 	static int FindClosestPosition(int val, int multiple);
+
+	void SetTreeBlocksForChunk(Biome biome, int x, int z, int minY, int maxY, std::vector<float>& chunkSectionNoise, int size);
 
 	std::vector<float> GetNoiseForChunkSection(int x, int z, int size);
 };
