@@ -10,7 +10,7 @@ You see a board of planned features here: https://trello.com/b/FBFUMqoR/blockgam
 # Current Features
 
 - Infinite terrain (on x and z axis). You can set minimum and maximum y values for terrain to render. For example a minimum y of 0 and maximum y of 3 would result in 3 chunks being used for the height in terrain generation.
-- Grassland, Desert and Snow biomes chosen based on a noise value per chunk that acts as the temperature of the chunk (low temperature creates a snow biome chunk, medium creates grassland, high creates desert). This will be expanded to be more intelligent i.e. take into account other noise-generated paramaters.
+- Grassland, Desert, Snow and Forest biomes chosen based on a noise value per chunk that acts as the temperature of the chunk (low temperature creates a snow biome chunk, medium creates grassland, high creates desert). This will be expanded to be more intelligent i.e. take into account other noise-generated paramaters.
 - Basic Entity-Component System (Entities have a list of components that store a reference to their owner allowing interaction between components)
 - Free-form controller (doesn't have delta time yet so speed depends on frame-rate)
 - Seamless terrain with a mix of hills/mountains and flatland.
