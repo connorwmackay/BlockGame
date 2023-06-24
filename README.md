@@ -5,6 +5,8 @@ As this is still in active development, expect the performance to be sub-optimal
 
 You see a board of planned features here: https://trello.com/b/FBFUMqoR/blockgame
 
+Switched to now use libnoise, you will need to re-download the dependencies.
+
 ![Screenshot of the game running on Windows](new-screenshot-1.png)
 
 # Current Features
