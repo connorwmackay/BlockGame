@@ -68,7 +68,6 @@ class Chunk : public Entity
 
 	World* world_;
 protected:
-	void UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY);
 	void GenerateMesh(bool isOnMainThread = true);
 
 	bool IsInChunk(int x, int y, int z);
@@ -80,6 +79,10 @@ public:
 
 	void Draw();
 
+	void UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY);
+
+	void UpdateBlocks();
+
 	void Unload();
 	void Recreate(Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 newStartingPosition, int seed, bool isOnMainThread = true);
 
@@ -90,4 +93,6 @@ public:
 
 	void AddTreeLeavePositions();
 	void AddTreeTrunkPositions();
+
+	TransformComponent* GetTransformComponent();
 };

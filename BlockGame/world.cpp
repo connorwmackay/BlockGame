@@ -197,6 +197,13 @@ bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::
 	{
 		for (int x = startX; x <= endX; x += xIncrement)
 		{
+			float temperature = 0.0f;
+			temperatureNoise_->GenUniformGrid2D(&temperature, x / 16.0f, z / 16.0f, 1, 1, 0.05f, seed_);
+			Biome biome = GetBiomeFromTemperature(temperature);
+
+			std::vector<float> chunkNoiseSection = GetNoiseForChunkSection(x, z, 16);
+			SetTreeBlocksForChunk(biome, x, z, yMin, yMax, chunkNoiseSection, 16);
+
 			bool shouldAddNoise = true;
 			for (glm::vec3 loadedChunkPos : loadedChunkPositions)
 			{
@@ -230,15 +237,16 @@ bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::
 			}
 
 			if (shouldAddNoise) {
-				chunkNoiseSections.push_back({ glm::vec3(x, 0, z), GetNoiseForChunkSection(x, z, 16)});
+				chunkNoiseSections.push_back({ glm::vec3(x, 0, z), chunkNoiseSection });
 			}
+		}
+	}
 
-			float temperature = 0.0f;
-			temperatureNoise_->GenUniformGrid2D(&temperature, x / 16.0f, z / 16.0f, 1, 1, 0.05f, seed_);
-			Biome biome = GetBiomeFromTemperature(temperature);
-
-			std::vector<float> chunkNoiseSection = GetNoiseForChunkSection(x, z, 16);
-			SetTreeBlocksForChunk(biome, x, z, yMin, yMax, chunkNoiseSection, 16);
+	for (Chunk* chunk : chunks_)
+	{
+		if (!chunk->IsUnloaded())
+		{
+			chunk->UpdateBlocks();
 		}
 	}
 

@@ -29,6 +29,7 @@ Chunk::Chunk(World* world, Biome biome, std::vector<float> chunkSectionNoise, in
 	treeLeavePositions_ = std::vector<glm::vec3>(size * size * size);
 
 	UseNoise(chunkSectionNoise, minY, maxY);
+	UpdateBlocks();
 
 	TextureData textureData = Texture::LoadTextureDataFromFile("./Assets/textureAtlas.png");
 	texture_ = new Texture2D(textureData, GL_TEXTURE_2D, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST);
@@ -374,29 +375,6 @@ void Chunk::UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY)
 		break;
 	}
 
-	auto localTreeTrunkPositions = std::vector<glm::vec3*>();
-	auto localTreeLeavePositions = std::vector<glm::vec3*>();
-	
-	for (glm::vec3& treeLeavePos : world_->TreeLeavePositions)
-	{
-		if (treeLeavePos.x >= position.x && treeLeavePos.x <= position.x + size_ &&
-			treeLeavePos.y >= position.y && treeLeavePos.y <= position.y + size_ &&
-			treeLeavePos.z >= position.z && treeLeavePos.z <= position.z + size_)
-		{
-			localTreeLeavePositions.push_back(&treeLeavePos);
-		}
-	}
-
-	for (glm::vec3& treeTrunkPos : world_->TreeTrunkPositions)
-	{
-		if (treeTrunkPos.x >= position.x && treeTrunkPos.x <= position.x + size_ &&
-			treeTrunkPos.y >= position.y && treeTrunkPos.y <= position.y + size_ &&
-			treeTrunkPos.z >= position.z && treeTrunkPos.z <= position.z + size_)
-		{
-			localTreeTrunkPositions.push_back(&treeTrunkPos);
-		}
-	}
-
 	int currentBlockIndex = 0;
 	int currentNoiseIndex = 0;
 	for (int z = 0; z < size_.load(); z++)
@@ -417,43 +395,21 @@ void Chunk::UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY)
 
 				float currentY = position.y + (float)y;
 
-				bool ignoreGenericBlockGen = false;
-
-				for (glm::vec3* treeLeavePos : localTreeLeavePositions)
+				if ((int)currentY < (int)ySurface && currentY >(int)ySurface - 3)
 				{
-					if ((int)position.x + x == (int)treeLeavePos->x && (int)position.y + y == (int)treeLeavePos->y && (int)position.z + z == (int)treeLeavePos->z)
-					{
-						currentBlock = BLOCK_TYPE_TREELEAVES;
-						ignoreGenericBlockGen = true;
-					}
+					currentBlock = subSurfaceBlockHigh;
 				}
-			
-				for (glm::vec3* treeTrunkPos : localTreeTrunkPositions)
+				else if ((int)currentY < (int)ySurface)
 				{
-					if ((int)position.x + x == (int)treeTrunkPos->x && (int)position.y + y == (int)treeTrunkPos->y && (int)position.z + z == (int)treeTrunkPos->z)
-					{
-						currentBlock = BLOCK_TYPE_TREEBARK;
-						ignoreGenericBlockGen = true;
-					}
+					currentBlock = subSurfaceBlockLow;
 				}
-
-				if (!ignoreGenericBlockGen) {
-					if ((int)currentY < (int)ySurface && currentY >(int)ySurface - 3)
-					{
-						currentBlock = subSurfaceBlockHigh;
-					}
-					else if ((int)currentY < (int)ySurface)
-					{
-						currentBlock = subSurfaceBlockLow;
-					}
-					else if ((int)currentY > (int)ySurface)
-					{
-						currentBlock = BLOCK_TYPE_AIR;
-					}
-					else
-					{
-						currentBlock = surfaceBlock;
-					}
+				else if ((int)currentY > (int)ySurface)
+				{
+					currentBlock = BLOCK_TYPE_AIR;
+				}
+				else
+				{
+					currentBlock = surfaceBlock;
 				}
 
 				xRow.push_back(currentBlock);
@@ -482,6 +438,7 @@ void Chunk::Recreate(Biome biome, std::vector<float> chunkSectionNoise, int minY
 	biome_ = biome;
 	transformComponent->SetTranslation(newStartingPosition);
 	UseNoise(chunkSectionNoise, minY, maxY);
+	UpdateBlocks();
 	GenerateMesh(isOnMainThread);
 	isUnloaded.store(false);
 }
@@ -538,4 +495,74 @@ void Chunk::AddTreeLeavePositions()
 void Chunk::AddTreeTrunkPositions()
 {
 	world_->TreeTrunkPositions.insert(world_->TreeTrunkPositions.end(), treeTrunkPositions_.begin(), treeTrunkPositions_.end());
+}
+
+
+TransformComponent* Chunk::GetTransformComponent()
+{
+	return transformComponent;
+}
+
+void Chunk::UpdateBlocks()
+{
+	glm::vec3 position = transformComponent->GetTranslation();
+
+	auto localTreeTrunkPositions = std::vector<glm::vec3*>();
+	auto localTreeLeavePositions = std::vector<glm::vec3*>();
+
+	for (glm::vec3& treeLeavePos : world_->TreeLeavePositions)
+	{
+		if (treeLeavePos.x >= position.x && treeLeavePos.x <= position.x + size_ &&
+			treeLeavePos.y >= position.y && treeLeavePos.y <= position.y + size_ &&
+			treeLeavePos.z >= position.z && treeLeavePos.z <= position.z + size_)
+		{
+			localTreeLeavePositions.push_back(&treeLeavePos);
+		}
+	}
+
+	for (glm::vec3& treeTrunkPos : world_->TreeTrunkPositions)
+	{
+		if (treeTrunkPos.x >= position.x && treeTrunkPos.x <= position.x + size_ &&
+			treeTrunkPos.y >= position.y && treeTrunkPos.y <= position.y + size_ &&
+			treeTrunkPos.z >= position.z && treeTrunkPos.z <= position.z + size_)
+		{
+			localTreeTrunkPositions.push_back(&treeTrunkPos);
+		}
+	}
+
+	for (int z = 0; z < size_.load(); z++)
+	{
+		for (int x = 0; x < size_.load(); x++)
+		{
+			for (int y = 0; y < size_.load(); y++)
+			{
+				uint8_t currentBlock = BLOCK_TYPE_AIR;
+
+				for (glm::vec3* treeLeavePos : localTreeLeavePositions)
+				{
+					if (treeLeavePos != nullptr) {
+						if ((int)position.x + x == (int)treeLeavePos->x && (int)position.y + y == (int)treeLeavePos->y && (int)position.z + z == (int)treeLeavePos->z)
+						{
+							currentBlock = BLOCK_TYPE_TREELEAVES;
+						}
+					}
+				}
+
+				for (glm::vec3* treeTrunkPos : localTreeTrunkPositions)
+				{
+					if (treeTrunkPos != nullptr) {
+						if ((int)position.x + x == (int)treeTrunkPos->x && (int)position.y + y == (int)treeTrunkPos->y && (int)position.z + z == (int)treeTrunkPos->z)
+						{
+							currentBlock = BLOCK_TYPE_TREEBARK;
+						}
+					}
+				}
+
+				if (currentBlock != BLOCK_TYPE_AIR)
+				{
+					blocks_.at(z).at(x).at(y) = currentBlock;
+				}
+			}
+		}
+	}
 }
