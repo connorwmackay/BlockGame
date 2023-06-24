@@ -1,7 +1,7 @@
 # BlockGame
 This is my attempt at making a Minecraft clone using OpenGL and C++. My previous project RemEngine featured infinitely generated  terrain, however it used noise incorrectly and used instancing instead of meshing. This engine uses meshing, where all the visible faces of blocks in a chunk are combined into one mesh and then that mesh is drawn.
 
-As this is still in active development, expect the performance to be sub-optimal, I still have a lot of performance improvements to make. (Loading chunks is much faster in release build mode since vectors have really bad debug build performance.) 
+As this is still in active development, expect the performance to be sub-optimal, I still have a lot of performance improvements to make. Notably, since I used std::vector a lot the debug build performance is much slower than when the game is built on release mode, so loading chunks may appear slow but would actually be much faster for a proper build.
 
 You see a board of planned features here: https://trello.com/b/FBFUMqoR/blockgame
 
