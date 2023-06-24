@@ -81,10 +81,9 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 					numBlocksRendered++;
 
 					// Get the adjacent blocks
-
 					uint8_t adjacentBlockUp = BLOCK_TYPE_AIR;
 					if (IsInChunk(x, y + 1, z)) {
-						adjacentBlockUp = blocks_[z][x][y+1];
+						adjacentBlockUp = blocks_[z][x][y + 1];
 					}
 
 					uint8_t adjacentBlockDown = BLOCK_TYPE_AIR;
@@ -139,9 +138,9 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
-							offsetStart - 2,
+							offsetStart - 1,
 							offsetStart - 3,
-							offsetStart - 1
+							offsetStart - 2,
 							}
 						);
 					}
@@ -162,9 +161,9 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
-							offsetStart - 2,
+							offsetStart - 1,
 							offsetStart - 3,
-							offsetStart - 1
+							offsetStart - 2,
 							}
 						);
 					}
@@ -185,9 +184,9 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
-							offsetStart - 2,
+							offsetStart - 1,
 							offsetStart - 3,
-							offsetStart - 1
+							offsetStart - 2,
 							}
 						);
 					}
@@ -208,9 +207,9 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
-							offsetStart - 2,
+							offsetStart - 1,
 							offsetStart - 3,
-							offsetStart - 1
+							offsetStart - 2,
 							}
 						);
 					}
@@ -231,9 +230,9 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
-							offsetStart - 2,
+							offsetStart - 1,
 							offsetStart - 3,
-							offsetStart - 1
+							offsetStart - 2,
 							}
 						);
 					}
@@ -254,9 +253,9 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 							offsetStart - 0,
 							offsetStart - 1,
 							offsetStart - 2,
-							offsetStart - 2,
+							offsetStart - 1,
 							offsetStart - 3,
-							offsetStart - 1
+							offsetStart - 2,
 							}
 						);
 					}
@@ -503,8 +502,10 @@ TransformComponent* Chunk::GetTransformComponent()
 	return transformComponent;
 }
 
-void Chunk::UpdateBlocks()
+bool Chunk::UpdateBlocks()
 {
+	bool hasUpdatedBlocks = false;
+
 	glm::vec3 position = transformComponent->GetTranslation();
 
 	auto localTreeTrunkPositions = std::vector<glm::vec3*>();
@@ -561,8 +562,11 @@ void Chunk::UpdateBlocks()
 				if (currentBlock != BLOCK_TYPE_AIR)
 				{
 					blocks_.at(z).at(x).at(y) = currentBlock;
+					hasUpdatedBlocks = true;
 				}
 			}
 		}
 	}
+
+	return hasUpdatedBlocks;
 }

@@ -61,6 +61,7 @@ public:
 	void Update(glm::vec3 currentPlayerPos);
 	std::vector<Chunk*> GetWorld();
 
+	// TODO: Have a second Worker with multiple internal threads that recreates multiple chunks at once
 	bool LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::vector<glm::vec3> loadedChunkPositions, std::vector<Chunk*> chunkIndexes);
 
 	// Finds the closest position that's a multiple of the passed

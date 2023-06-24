@@ -68,8 +68,6 @@ class Chunk : public Entity
 
 	World* world_;
 protected:
-	void GenerateMesh(bool isOnMainThread = true);
-
 	bool IsInChunk(int x, int y, int z);
 
 	SubTexture GetSubTextureFromBlockAndCol(uint8_t block, int col);
@@ -81,7 +79,10 @@ public:
 
 	void UseNoise(std::vector<float> chunkSectionNoise, int minY, int maxY);
 
-	void UpdateBlocks();
+	void GenerateMesh(bool isOnMainThread = true);
+
+	// Returns true if any blocks were updated
+	bool UpdateBlocks();
 
 	void Unload();
 	void Recreate(Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 newStartingPosition, int seed, bool isOnMainThread = true);

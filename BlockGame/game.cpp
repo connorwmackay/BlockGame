@@ -63,9 +63,11 @@ Game::Game()
 	const char* glsl_version = "#version 330";
 	ImGui_ImplOpenGL3_Init(glsl_version);
 
+	// OpenGL Settings
 	glEnable(GL_DEBUG_OUTPUT);
-
 	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+
 	glDebugMessageCallback(MessageCallback, 0);
 }
 

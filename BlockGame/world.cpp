@@ -246,7 +246,11 @@ bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::
 	{
 		if (!chunk->IsUnloaded())
 		{
-			chunk->UpdateBlocks();
+			// If any blocks were updated then the chunk mesh
+			// needs to be regenerated.
+			if (chunk->UpdateBlocks()) {
+				chunk->GenerateMesh(false);
+			}
 		}
 	}
 
@@ -351,9 +355,9 @@ void World::SetTreeBlocksForChunk(Biome biome, int x, int z, int minY, int maxY,
 
 	auto treeTrunkPositions = std::vector<glm::vec3>();
 	auto treeLeavePositions = std::vector<glm::vec3>();
-	for (int currentZ = z; currentZ < z + size; currentZ++)
+	for (int currentZ = z; currentZ < (z + size); currentZ++)
 	{
-		for (int currentX = x; currentX < x + size; currentX++)
+		for (int currentX = x; currentX < (x + size); currentX++)
 		{
 			float currentNoiseVal = chunkSectionNoise[index];
 			float ySize = glm::abs(maxY - minY) * size;
