@@ -9,6 +9,8 @@
 
 #include <noise/noise.h>
 
+#include "frustum.h"
+
 struct ChunkNoiseSection
 {
 	glm::vec3 position; // Y should always be zero here
@@ -71,4 +73,7 @@ public:
 	void SetTreeBlocksForChunk(Biome biome, int x, int z, int minY, int maxY, std::vector<float>& chunkSectionNoise, int size);
 
 	std::vector<float> GetNoiseForChunkSection(int x, int z, int size);
+
+	void FrustumCullChunks(const Frustum& frustum);
+	int NumChunksCulled();
 };

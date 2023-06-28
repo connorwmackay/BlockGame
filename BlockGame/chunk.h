@@ -67,6 +67,8 @@ class Chunk : public Entity
 	std::vector<glm::vec3> treeLeavePositions_;
 
 	World* world_;
+
+	bool shouldDraw_;
 protected:
 	bool IsInChunk(int x, int y, int z);
 
@@ -94,6 +96,9 @@ public:
 
 	void AddTreeLeavePositions();
 	void AddTreeTrunkPositions();
+
+	void SetShouldDraw(bool shouldDraw);
+	bool GetShouldDraw();
 
 	TransformComponent* GetTransformComponent();
 };

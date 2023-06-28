@@ -399,3 +399,35 @@ void World::SetTreeBlocksForChunk(Biome biome, int x, int z, int minY, int maxY,
 	TreeTrunkPositions.insert(TreeTrunkPositions.end(), treeTrunkPositions.begin(), treeTrunkPositions.end());
 	TreeLeavePositions.insert(TreeLeavePositions.end(), treeLeavePositions.begin(), treeLeavePositions.end());
 }
+
+void World::FrustumCullChunks(const Frustum& frustum)
+{
+	for (Chunk* chunk : chunks_)
+	{
+		AABB chunkAabb{};
+		chunkAabb.origin = chunk->GetTransformComponent()->GetTranslation();
+		chunkAabb.size = glm::vec3(8.0f, 8.0f, 8.0f);
+
+		if (IsBoundingBoxInsideFrustum(frustum, chunkAabb))
+		{
+			chunk->SetShouldDraw(true);
+		}
+		else
+		{
+			chunk->SetShouldDraw(false);
+		}
+	}
+}
+
+int World::NumChunksCulled()
+{
+	int numChunksCulled = 0;
+	for (Chunk* chunk : chunks_)
+	{
+		if (!chunk->GetShouldDraw())
+		{
+			numChunksCulled++;
+		}
+	}
+	return numChunksCulled;
+}

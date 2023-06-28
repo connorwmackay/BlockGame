@@ -14,6 +14,7 @@
 Chunk::Chunk(World* world, Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed)
 	: Entity()
 {
+	shouldDraw_ = true;
 	world_ = world;
 
 	size_.store(size);
@@ -323,7 +324,7 @@ void Chunk::Update()
 
 void Chunk::Draw()
 {
-	if (!isUnloaded.load()) {
+	if (!isUnloaded.load() && shouldDraw_) {
 		meshComponent->Draw();
 	}
 }
@@ -428,6 +429,7 @@ void Chunk::Unload()
 {
 	meshComponent->GetMesh()->Unload();
 	isUnloaded.store(true);
+	shouldDraw_ = true;
 }
 
 void Chunk::Recreate(Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 newStartingPosition, int seed, bool isOnMainThread)
@@ -569,4 +571,14 @@ bool Chunk::UpdateBlocks()
 	}
 
 	return hasUpdatedBlocks;
+}
+
+void Chunk::SetShouldDraw(bool shouldDraw)
+{
+	shouldDraw_ = shouldDraw;
+}
+
+bool Chunk::GetShouldDraw()
+{
+	return shouldDraw_;
 }

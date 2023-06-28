@@ -91,7 +91,10 @@ void Game::Run()
 
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
-	perspective = glm::perspective(glm::radians(60.0f), (GLfloat)((float)width / (float)height), 0.1f, 400.0f);
+	float zNear = 0.1f;
+	float zFar = 400.0f;
+	float fov = 60.0f;
+	perspective = glm::perspective(glm::radians(fov), (GLfloat)((float)width / (float)height), zNear, zFar);
 
 	World world = World(glm::vec3(0.0f, 0.0f, 0.0f), 5);
 
@@ -110,9 +113,15 @@ void Game::Run()
 	TransformComponent* freeFormTransform = static_cast<TransformComponent*>(freeFormController.GetComponentByName("transform"));
 
 	std::thread regenerateThread;
+
+	bool shouldShowDebugInfo = true;
+
+	glClearColor(0.0f, 0.3f, 0.5f, 1.0f);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		debugInfo.StartFrame();
+		debugInfo.StartUpdate();
 
 		// Handle Input
 		glfwPollEvents();
@@ -129,18 +138,7 @@ void Game::Run()
 
 		ImGui::SetNextWindowPos(ImVec2(8.0f, 8.0f));
 		ImGui::Begin("Debug Information", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
-			ImGui::SeparatorText("Graphics:");
-			debugInfo.Display();
-			ImGui::SeparatorText("Game Data:");
-			std::stringstream playerPos;
-			playerPos << "Player Pos: (";
-			playerPos << (int)freeFormTransform->GetTranslation().x;
-			playerPos << ", ";
-			playerPos << (int)freeFormTransform->GetTranslation().y;
-			playerPos << ", ";
-			playerPos << (int)freeFormTransform->GetTranslation().z;
-			playerPos << ")";
-			ImGui::Text(playerPos.str().c_str());
+		debugInfo.Display(freeFormTransform->GetTranslation(), &world);
 		ImGui::End();
 
 		world.Update(freeFormTransform->GetTranslation());
@@ -156,8 +154,10 @@ void Game::Run()
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 		}
 
-		glClearColor(0.0f, 0.3f, 0.5f, 1.0f);
-		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+		if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS)
+		{
+			shouldShowDebugInfo = !shouldShowDebugInfo;
+		}
 
 		CameraComponent* cameraComponent = static_cast<CameraComponent*>(freeFormController.GetComponentByName("camera"));
 		TransformComponent* transformComponent = static_cast<TransformComponent*>(freeFormController.GetComponentByName("transform"));
@@ -167,7 +167,18 @@ void Game::Run()
 		if (view != oldView)
 		{
 			shouldUpdateViews = true;
+			int width, height;
+			glfwGetWindowSize(window, &width, &height);
+			float aspectRatio = width / height;
+			Frustum frustum = CreateFrustum(freeFormTransform, fov, aspectRatio, zNear, zFar);
+			world.FrustumCullChunks(frustum);
+
 		}
+
+		debugInfo.EndUpdate();
+		debugInfo.StartRender();
+
+		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
 		for (auto chunk : world.GetWorld())
 		{
@@ -186,6 +197,7 @@ void Game::Run()
 
 		glfwSwapBuffers(window);
 
+		debugInfo.EndRender();
 		debugInfo.EndFrame();
 
 		oldView = view;
@@ -205,6 +217,7 @@ Game::~Game()
 void ResizeViewportCallback(GLFWwindow* window, int width, int height)
 {
 	if (width > 0 && height > 0) {
+		LOG("Resized window to %dx%d\n", width, height);
 		glViewport(0, 0, width, height);
 	}
 }
@@ -221,6 +234,28 @@ DebugInfo::DebugInfo()
 	glMajorVersion = -1;
 	glMinorVersion = -1;
 	averageFrameTime = 0.0f;
+}
+
+void DebugInfo::StartRender()
+{
+	startRenderFrameTime = glfwGetTime();
+}
+
+void DebugInfo::EndRender()
+{
+	endRenderFrameTime = glfwGetTime();
+	renderFrameTimes.push_back(endRenderFrameTime - startRenderFrameTime);
+}
+
+void DebugInfo::StartUpdate()
+{
+	startUpdateFrameTime = glfwGetTime();
+}
+
+void DebugInfo::EndUpdate()
+{
+	endUpdateFrameTime = glfwGetTime();
+	updateFrameTimes.push_back(endUpdateFrameTime - startUpdateFrameTime);
 }
 
 void DebugInfo::StartFrame()
@@ -244,6 +279,10 @@ void DebugInfo::EndFrame()
 	if ((endFrameTime - startSecondTime) >= 0.1f)
 	{
 		startSecondTime = glfwGetTime();
+		fpsAverage = 0.0f;
+		averageFrameTime = 0.0f;
+		averageUpdateFrameTime = 0.0f;
+		averageRenderFrameTime = 0.0f;
 		fpsMin = fpsCounts[0];
 		fpsMax = fpsCounts[0];
 
@@ -266,20 +305,37 @@ void DebugInfo::EndFrame()
 			averageFrameTime += frameTime;
 		}
 
+		for (double updateFrameTime : updateFrameTimes)
+		{
+			averageUpdateFrameTime += updateFrameTime;
+		}
+
+		for (double renderFrameTime : renderFrameTimes)
+		{
+			averageRenderFrameTime += renderFrameTime;
+		}
+
 		fpsAverage /= fpsCounts.size();
 		averageFrameTime /= frameTimes.size();
+		averageRenderFrameTime /= renderFrameTimes.size();
+		averageUpdateFrameTime /= updateFrameTimes.size();
 		fpsCounts.clear();
 		frameTimes.clear();
+		renderFrameTimes.clear();
+		updateFrameTimes.clear();
 	}
 }
 
-void DebugInfo::Display()
+void DebugInfo::Display(const glm::vec3& playerPos, World* world)
 {
+	ImGui::SeparatorText("Graphics:");
 	std::stringstream glVersion;
 	glVersion << "OpenGL Version: " << glMajorVersion << "." << glMinorVersion;
 
 	std::stringstream fpsData;
 	fpsData << "Frame Time Avg.: " << averageFrameTime * 1000.0f << "ms";
+	fpsData << "\nUpdate Frame Time Avg.: " << averageUpdateFrameTime * 1000.0f << "ms";
+	fpsData << "\nRender Frame Time Avg.: " << averageRenderFrameTime * 1000.0f << "ms";
 	fpsData << "\nFPS Max: " << fpsMax;
 	fpsData << "\nFPS Avg.: " << fpsAverage;
 	fpsData << "\nFPS Min: " << fpsMin;
@@ -297,4 +353,21 @@ void DebugInfo::Display()
 	ImGui::Text(glVersion.str().c_str());
 	ImGui::Text(fpsData.str().c_str());
 	ImGui::Text(vsync.str().c_str());
+
+	ImGui::SeparatorText("Game Data:");
+
+	std::stringstream playerPosStream;
+	playerPosStream << "Player Pos: (";
+	playerPosStream << (int)playerPos.x;
+	playerPosStream << ", ";
+	playerPosStream << (int)playerPos.y;
+	playerPosStream << ", ";
+	playerPosStream << (int)playerPos.z;
+	playerPosStream << ")";
+	ImGui::Text(playerPosStream.str().c_str());
+
+	std::stringstream chunksCulled;
+	chunksCulled << "No. Chunks Culled: ";
+	chunksCulled << world->NumChunksCulled();
+	ImGui::Text(chunksCulled.str().c_str());
 }

@@ -72,4 +72,6 @@ public:
 	void Draw();
 
 	void Unload();
+
+	std::vector<Vertex>& GetVertices();
 };

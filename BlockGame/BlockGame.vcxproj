@@ -163,6 +163,7 @@
     <ClCompile Include="component.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="freeFormController.cpp" />
+    <ClCompile Include="frustum.cpp" />
     <ClCompile Include="game.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="component.h" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="freeFormController.h" />
+    <ClInclude Include="frustum.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="logging.h" />
     <ClInclude Include="mesh.h" />

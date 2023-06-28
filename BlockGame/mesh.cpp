@@ -189,3 +189,8 @@ void Mesh::Unload()
 	vertices_.clear();
 	indices_.clear();
 }
+
+std::vector<Vertex>& Mesh::GetVertices()
+{
+	return vertices_;
+}

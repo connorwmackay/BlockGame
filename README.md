@@ -7,7 +7,7 @@ You see a board of planned features here: https://trello.com/b/FBFUMqoR/blockgam
 
 Switched to now use libnoise, you will need to re-download the dependencies.
 
-![Screenshot of the game running on Windows](new-screenshot-1.png)
+![Screenshot of the game running on Windows](new-screenshot-2.png)
 
 # Current Features
 
