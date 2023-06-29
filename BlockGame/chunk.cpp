@@ -11,11 +11,12 @@
 
 #include "world.h"
 
-Chunk::Chunk(World* world, Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed)
+Chunk::Chunk(World* world, Biome biome, Texture2DArray texture, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed)
 	: Entity()
 {
 	shouldDraw_ = true;
 	world_ = world;
+	texture_ = texture;
 
 	size_.store(size);
 	blocks_ = std::vector<std::vector<std::vector<uint8_t>>>();
@@ -32,28 +33,19 @@ Chunk::Chunk(World* world, Biome biome, std::vector<float> chunkSectionNoise, in
 	UseNoise(chunkSectionNoise, minY, maxY);
 	UpdateBlocks();
 
-	TextureData textureData = Texture::LoadTextureDataFromFile("./Assets/textureAtlas.png");
-	texture_ = new Texture2D(textureData, GL_TEXTURE_2D, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST);
-	Texture::FreeTextureData(textureData);
+	
 
-	AddComponent("mesh", new MeshComponent(this, new Mesh(texture_)));
+	AddComponent("mesh", new MeshComponent(this, new Mesh(&texture_)));
 	meshComponent = static_cast<MeshComponent*>(GetComponentByName("mesh"));
 	TextureAtlas textureAtlas = { 8, 6 };
-
-	grassSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(0, textureAtlas);
-	dirtSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(1, textureAtlas);
-	stoneSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(2, textureAtlas);
-	sandSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(3, textureAtlas);
-	snowSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(4, textureAtlas);
-	forestGrassSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(5, textureAtlas);
-	treeTrunkSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(6, textureAtlas);
-	treeLeavesSubTextures_ = GetSubTexturesOfRowFromTextureAtlas(7, textureAtlas);
 
 	GenerateMesh();
 }
 
 void Chunk::GenerateMesh(bool isOnMainThread)
 {
+	SubTexture textureAtlasSubTexture = GetSubTextureFromTextureAtlas(0, 0, { 1, 1 });
+
 	Mesh* mesh = meshComponent->GetMesh();
 
 	float meshStartX = -1.0f * (size_.load() / 2.0f);
@@ -122,15 +114,17 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 					float meshY = meshStartY + y;
 					float meshZ = meshStartZ + z;
 
+					int currentRow = currentBlock-1;
+
 					// Add each block face that faces an air block
 					if (adjacentBlockUp == BLOCK_TYPE_AIR)
 					{
-						SubTexture subTexture = GetSubTextureFromBlockAndCol(currentBlock, 0);
+						int textureAtlasIndex = currentRow * texture_.GetNumCols() + 0;
 
-						vertices.push_back({ meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, subTexture.startS, subTexture.endT }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
 
 						unsigned int offsetStart = vertices.size() - 1;
 
@@ -148,12 +142,12 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockDown == BLOCK_TYPE_AIR)
 					{
-						SubTexture subTexture = GetSubTextureFromBlockAndCol(currentBlock, 1);
+						int textureAtlasIndex = currentRow * texture_.GetNumCols() + 1;
 
-						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.endT }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
+						vertices.push_back({ meshX,		meshY,		meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY,		meshZ - 1, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
 
 						unsigned int offsetStart = vertices.size() - 1;
 
@@ -171,12 +165,12 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockRight == BLOCK_TYPE_AIR)
 					{
-						SubTexture subTexture = GetSubTextureFromBlockAndCol(currentBlock, 2);
+						int textureAtlasIndex = currentRow * texture_.GetNumCols() + 2;
 
-						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, subTexture.startS, subTexture.endT }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
+						vertices.push_back({ meshX + 1,	meshY,		meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
 
 						unsigned int offsetStart = vertices.size() - 1;
 
@@ -194,12 +188,12 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockLeft == BLOCK_TYPE_AIR)
 					{
-						SubTexture subTexture = GetSubTextureFromBlockAndCol(currentBlock, 3);
+						int textureAtlasIndex = currentRow * texture_.GetNumCols() + 3;
 
-						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
-						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.endT }); // Top-left
-						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
+						vertices.push_back({ meshX,		meshY,		meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
+						vertices.push_back({ meshX,		meshY,		meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
+						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
 
 						unsigned int offsetStart = vertices.size() - 1;
 
@@ -217,12 +211,12 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockFront == BLOCK_TYPE_AIR)
 					{
-						SubTexture subTexture = GetSubTextureFromBlockAndCol(currentBlock, 4);
+						int textureAtlasIndex = currentRow * texture_.GetNumCols() + 4;
 
-						vertices.push_back({ meshX,		meshY,		meshZ, subTexture.startS, subTexture.startT }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ, subTexture.endS, subTexture.startT }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY + 1,	meshZ, subTexture.startS, subTexture.endT }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, subTexture.endS, subTexture.endT }); // Top-Right
+						vertices.push_back({ meshX,		meshY,		meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
 
 						unsigned int offsetStart = vertices.size() - 1;
 
@@ -240,12 +234,12 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 
 					if (adjacentBlockBack == BLOCK_TYPE_AIR)
 					{
-						SubTexture subTexture = GetSubTextureFromBlockAndCol(currentBlock, 5);
+						int textureAtlasIndex = currentRow * texture_.GetNumCols() + 5;
 
-						vertices.push_back({ meshX,		meshY,		meshZ - 1, subTexture.startS, subTexture.startT }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, subTexture.endS, subTexture.startT }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, subTexture.startS, subTexture.endT }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, subTexture.endS, subTexture.endT }); // Top-Right
+						vertices.push_back({ meshX,		meshY,		meshZ - 1, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
 
 						unsigned int offsetStart = vertices.size() - 1;
 
@@ -442,40 +436,6 @@ void Chunk::Recreate(Biome biome, std::vector<float> chunkSectionNoise, int minY
 	UpdateBlocks();
 	GenerateMesh(isOnMainThread);
 	isUnloaded.store(false);
-}
-
-SubTexture Chunk::GetSubTextureFromBlockAndCol(uint8_t block, int col)
-{
-	SubTexture subTexture{};
-
-	switch (block)
-	{
-	case BLOCK_TYPE_GRASS:
-		subTexture = grassSubTextures_.at(col);
-		break;
-	case BLOCK_TYPE_DIRT:
-		subTexture = dirtSubTextures_.at(col);
-		break;
-	case BLOCK_TYPE_STONE:
-		subTexture = stoneSubTextures_.at(col);
-		break;
-	case BLOCK_TYPE_SAND:
-		subTexture = sandSubTextures_.at(col);
-		break;
-	case BLOCK_TYPE_SNOW:
-		subTexture = snowSubTextures_.at(col);
-		break;
-	case BLOCK_TYPE_FORESTGRASS:
-		subTexture = forestGrassSubTextures_.at(col);
-		break;
-	case BLOCK_TYPE_TREEBARK:
-		subTexture = treeTrunkSubTextures_.at(col);
-		break;
-	case BLOCK_TYPE_TREELEAVES:
-		subTexture = treeLeavesSubTextures_.at(col);
-	}
-
-	return subTexture;
 }
 
 bool Chunk::IsUnloaded()

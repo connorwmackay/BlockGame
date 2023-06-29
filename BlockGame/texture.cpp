@@ -28,7 +28,7 @@ TextureData Texture::LoadTextureDataFromFile(const char* file)
 {
 	TextureData textureData{};
 
-	textureData.data = stbi_load(file, &textureData.width, &textureData.height, &textureData.numChannels, 0);
+	textureData.data = stbi_load(file, &textureData.width, &textureData.height, &textureData.numChannels, 3);
 
 	if (!textureData.data)
 	{
@@ -77,6 +77,54 @@ Texture2D::Texture2D(TextureData textureData, GLenum textureTarget, GLint textur
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureData.width, textureData.height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData.data);
 	glGenerateMipmap(textureTarget_);
+}
+
+Texture2DArray::Texture2DArray(TextureData textureData, GLenum textureTarget, GLint textureMinFilter, GLint textureMagFilter, int numCols, int numRows)
+	: Texture(textureData, textureTarget, textureMinFilter, textureMagFilter)
+{
+	numCols_ = numCols;
+	numRows_ = numRows;
+
+	Bind(GL_TEXTURE0);
+
+	glTexParameteri(textureTarget_, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(textureTarget_, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(textureTarget_, GL_TEXTURE_MIN_FILTER, textureMinFilter);
+	glTexParameteri(textureTarget_, GL_TEXTURE_MAG_FILTER, textureMagFilter);
+
+	glTexStorage3D(textureTarget_, 1, GL_RGB8, textureData.width/numCols, textureData.height/numRows, numCols * numRows);
+
+	for (int x = 0; x < numCols; x++) {
+		for (int y = 0; y < numRows; y++) {
+			glPixelStorei(GL_UNPACK_ROW_LENGTH, textureData.width);
+			glPixelStorei(GL_UNPACK_SKIP_PIXELS, x * (textureData.width / numCols));
+			glPixelStorei(GL_UNPACK_SKIP_ROWS, y * (textureData.height / numRows));
+			glTexSubImage3D(textureTarget_, 0, 0, 0, y * numCols + x, textureData.width / numCols, textureData.height / numRows, 1, GL_RGB, GL_UNSIGNED_BYTE, textureData.data);
+			glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+			glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+			glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+		}
+	}
+
+	glGenerateMipmap(textureTarget_);
+	Unbind(GL_TEXTURE0);
+}
+
+Texture2DArray::Texture2DArray()
+	: Texture()
+{
+	
+}
+
+
+int Texture2DArray::GetNumCols()
+{
+	return numCols_;
+}
+
+int Texture2DArray::GetNumRows()
+{
+	return numRows_;
 }
 
 SubTexture GetSubTextureFromTextureAtlas(int const& rowInd, int const& colInd, TextureAtlas const& textureAtlas)

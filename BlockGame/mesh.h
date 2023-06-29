@@ -14,6 +14,7 @@ struct Vertex
 	float z;
 	float s;
 	float t;
+	int textureAtlasZ;
 
 	bool operator==(Vertex const& vertex) const;
 };
@@ -22,7 +23,7 @@ class Mesh
 {
 	std::vector<Vertex> vertices_;
 	std::vector<unsigned int> indices_;
-	Texture* texture_;
+	Texture2DArray* texture_;
 
 	unsigned int vao_;
 	unsigned int vbo_;
@@ -36,7 +37,7 @@ public:
 	// constructor.
 	Mesh();
 
-	Mesh(Texture* texture);
+	Mesh(Texture2DArray* texture);
 	~Mesh();
 
 	/*

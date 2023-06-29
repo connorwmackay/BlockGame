@@ -8,14 +8,14 @@
 
 bool Vertex::operator==(Vertex const& vertex) const
 {
-	bool isEqual = x == vertex.x && y == vertex.y && z == vertex.z && s == vertex.s && t == vertex.t;
+	bool isEqual = x == vertex.x && y == vertex.y && z == vertex.z && s == vertex.s && t == vertex.t && vertex.textureAtlasZ == textureAtlasZ;
 	return isEqual;
 }
 
 Mesh::Mesh()
 {}
 
-Mesh::Mesh(Texture* texture)
+Mesh::Mesh(Texture2DArray* texture)
 {
 	vertices_ = std::vector<Vertex>();
 	indices_ = std::vector<unsigned int>();
@@ -42,10 +42,13 @@ Mesh::Mesh(Texture* texture)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, sizeof(Vertex), (void*)0);
 	// Texture coordinates for the vertex
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
+	// Texture Atlas Index
+	glVertexAttribIPointer(2, 1, GL_INT, sizeof(Vertex), (void*)(5 * sizeof(float)));
 
 	// Enable the vertex attributes
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
 
 	shouldUpdateOnGPU.store(false);
 }

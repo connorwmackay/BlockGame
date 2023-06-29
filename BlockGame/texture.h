@@ -27,6 +27,7 @@ protected:
 	GLenum textureTarget_;
 	
 public:
+	Texture() = default;
 	Texture(TextureData textureData, GLenum textureTarget, GLint textureMinFilter, GLint textureMagFilter);
 	virtual ~Texture() = default;
 
@@ -45,6 +46,19 @@ class Texture2D : public Texture
 {
 public:
 	Texture2D(TextureData textureData, GLenum textureTarget, GLint textureMinFilter, GLint textureMagFilter);
+};
+
+class Texture2DArray : public Texture
+{
+protected:
+	int numCols_;
+	int numRows_;
+public:
+	Texture2DArray();
+	Texture2DArray(TextureData textureData, GLenum textureTarget, GLint textureMinFilter, GLint textureMagFilter, int numCols, int numRows);
+
+	int GetNumCols();
+	int GetNumRows();
 };
 
 struct TextureAtlas

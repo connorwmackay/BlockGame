@@ -36,7 +36,7 @@ enum class Biome
 
 class Chunk : public Entity
 {
-	Texture2D* texture_;
+	Texture2DArray texture_;
 
 	std::atomic<int> size_;
 
@@ -50,16 +50,6 @@ class Chunk : public Entity
 
 	std::atomic<bool> isUnloaded{false};
 
-	// Get all the subtextures once, so the calculation
-	// only needs to happen once, when a chunk is created.
-	std::vector<SubTexture> grassSubTextures_;
-	std::vector<SubTexture> dirtSubTextures_;
-	std::vector<SubTexture> stoneSubTextures_;
-	std::vector<SubTexture> sandSubTextures_;
-	std::vector<SubTexture> snowSubTextures_;
-	std::vector<SubTexture> forestGrassSubTextures_;
-	std::vector<SubTexture> treeTrunkSubTextures_;
-	std::vector<SubTexture> treeLeavesSubTextures_;
 
 	Biome biome_;
 
@@ -71,11 +61,9 @@ class Chunk : public Entity
 	bool shouldDraw_;
 protected:
 	bool IsInChunk(int x, int y, int z);
-
-	SubTexture GetSubTextureFromBlockAndCol(uint8_t block, int col);
 	
 public:
-	Chunk(World* world, Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed);
+	Chunk(World* world, Biome biome, Texture2DArray texture, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed);
 
 	void Draw();
 

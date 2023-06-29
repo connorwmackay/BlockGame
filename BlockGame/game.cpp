@@ -367,7 +367,7 @@ void DebugInfo::Display(const glm::vec3& playerPos, World* world)
 	ImGui::Text(playerPosStream.str().c_str());
 
 	std::stringstream chunksCulled;
-	chunksCulled << "No. Chunks Culled: ";
+	chunksCulled << "No. Chunks Frustum Culled: ";
 	chunksCulled << world->NumChunksCulled();
 	ImGui::Text(chunksCulled.str().c_str());
 }

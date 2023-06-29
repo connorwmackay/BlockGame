@@ -86,6 +86,11 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 			SetTreeBlocksForChunk(biome, (startX + x * 16.0f), (startZ + z * 16.0f), yMin, yMax, chunkSectionNoise, 16);
 		}
 	}
+
+	TextureData textureData = Texture::LoadTextureDataFromFile("./Assets/textureAtlas.png");
+	Texture2DArray texture = Texture2DArray(textureData, GL_TEXTURE_2D_ARRAY, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST, 6, 8);
+	Texture::FreeTextureData(textureData);
+
 	for (int z = 0; z < renderDistance*2+1; z++)
 	{
 		for (int x = 0; x < renderDistance*2+1; x++)
@@ -98,7 +103,7 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 
 			for (int y = yMin; y <= yMax; y++) {
 				
-				chunks_.push_back(new Chunk(this, biome, chunkSectionNoise, yMin, yMax, glm::vec3(startX + (x * 16.0f), y * 16.0f, startZ + (z * 16.0f)), 16, seed_));
+				chunks_.push_back(new Chunk(this, biome, texture, chunkSectionNoise, yMin, yMax, glm::vec3(startX + (x * 16.0f), y * 16.0f, startZ + (z * 16.0f)), 16, seed_));
 			}
 		}
 	}
