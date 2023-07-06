@@ -17,6 +17,7 @@ Switched to now use libnoise, you will need to re-download the dependencies.
 - Free-form controller (doesn't have delta time yet so speed depends on frame-rate)
 - Seamless terrain with a mix of hills/mountains and flatland.
 - ImGui is integrated
+- Directional light (no shadows)
 
 # How to Use This Project
 This project uses Visual Studio 2022 and has only been tested on Windows.
