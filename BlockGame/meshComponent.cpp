@@ -33,13 +33,19 @@ void MeshComponent::SetModel(glm::mat4 const& model)
 	mesh_->SetModel(model);
 }
 
-void MeshComponent::SetView(glm::mat4 const& view)
+void MeshComponent::SetView(glm::vec3 const& viewPos, glm::mat4 const& view)
 {
+	mesh_->SetViewPos(viewPos);
 	mesh_->SetView(view);
 }
 void MeshComponent::SetProjection(glm::mat4 const& projection)
 {
 	mesh_->SetProjection(projection);
+}
+
+void MeshComponent::SetDirectionalLight(DirectionalLight const& light)
+{
+	PassDirectionalLightToShader(mesh_->GetShaderProgram(), light);
 }
 
 Mesh* MeshComponent::GetMesh()

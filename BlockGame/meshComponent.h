@@ -3,6 +3,8 @@
 #include "mesh.h"
 #include <glm/glm.hpp>
 
+#include "light.h"
+
 class MeshComponent : public Component 
 {
 protected:
@@ -15,8 +17,10 @@ public:
 
 	void Draw();
 	void SetModel(glm::mat4 const& model);
-	void SetView(glm::mat4 const& view);
+	void SetView(glm::vec3 const& viewPos, glm::mat4 const& view);
 	void SetProjection(glm::mat4 const& projection);
+
+	void SetDirectionalLight(DirectionalLight const& light);
 
 	Mesh* GetMesh();
 

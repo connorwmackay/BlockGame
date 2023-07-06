@@ -121,10 +121,10 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 					{
 						int textureAtlasIndex = currentRow * texture_.GetNumCols() + 0;
 
-						vertices.push_back({ meshX,		meshY + 1,	meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ, 0.0f, 1.0f, 0.0f, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, 0.0f, 1.0f, 0.0f, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, 0.0f, 1.0f, 0.0f, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, 0.0f, 1.0f, 0.0f, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
 
 						unsigned int offsetStart = vertices.size() - 1;
 
@@ -144,10 +144,10 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 					{
 						int textureAtlasIndex = currentRow * texture_.GetNumCols() + 1;
 
-						vertices.push_back({ meshX,		meshY,		meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY,		meshZ - 1, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
+						vertices.push_back({ meshX,		meshY,		meshZ, 0.0f, -1.0f, 0.0f, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ, 0.0f, -1.0f, 0.0f, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY,		meshZ - 1, 0.0f, -1.0f, 0.0f, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, 0.0f, -1.0f, 0.0f, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
 
 						unsigned int offsetStart = vertices.size() - 1;
 
@@ -167,10 +167,10 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 					{
 						int textureAtlasIndex = currentRow * texture_.GetNumCols() + 2;
 
-						vertices.push_back({ meshX + 1,	meshY,		meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
+						vertices.push_back({ meshX + 1,	meshY,		meshZ, 1.0f, 0.0f, 0.0f, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, 1.0f, 0.0f, 0.0f, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, 1.0f, 0.0f, 0.0f, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, 1.0f, 0.0f, 0.0f, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
 
 						unsigned int offsetStart = vertices.size() - 1;
 
@@ -190,10 +190,10 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 					{
 						int textureAtlasIndex = currentRow * texture_.GetNumCols() + 3;
 
-						vertices.push_back({ meshX,		meshY,		meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
-						vertices.push_back({ meshX,		meshY,		meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY + 1,	meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
-						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
+						vertices.push_back({ meshX,		meshY,		meshZ, -1.0f, 0.0f, 0.0f, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
+						vertices.push_back({ meshX,		meshY,		meshZ - 1, -1.0f, 0.0f, 0.0f, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ, -1.0f, 0.0f, 0.0f, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
+						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, -1.0f, 0.0f, 0.0f, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
 
 						unsigned int offsetStart = vertices.size() - 1;
 
@@ -213,10 +213,10 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 					{
 						int textureAtlasIndex = currentRow * texture_.GetNumCols() + 4;
 
-						vertices.push_back({ meshX,		meshY,		meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY + 1,	meshZ, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
+						vertices.push_back({ meshX,		meshY,		meshZ, 0.0f, 0.0f, 1.0f, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ, 0.0f, 0.0f, 1.0f, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ, 0.0f, 0.0f, 1.0f, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ, 0.0f, 0.0f, 1.0f, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
 
 						unsigned int offsetStart = vertices.size() - 1;
 
@@ -236,10 +236,10 @@ void Chunk::GenerateMesh(bool isOnMainThread)
 					{
 						int textureAtlasIndex = currentRow * texture_.GetNumCols() + 5;
 
-						vertices.push_back({ meshX,		meshY,		meshZ - 1, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
-						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
-						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
-						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
+						vertices.push_back({ meshX,		meshY,		meshZ - 1, 0.0f, 0.0f, -1.0f, textureAtlasSubTexture.startS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Left
+						vertices.push_back({ meshX + 1,	meshY,		meshZ - 1, 0.0f, 0.0f, -1.0f, textureAtlasSubTexture.endS, textureAtlasSubTexture.startT, textureAtlasIndex }); // Bottom-Right
+						vertices.push_back({ meshX,		meshY + 1,	meshZ - 1, 0.0f, 0.0f, -1.0f, textureAtlasSubTexture.startS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-left
+						vertices.push_back({ meshX + 1,	meshY + 1,	meshZ - 1, 0.0f, 0.0f, -1.0f, textureAtlasSubTexture.endS, textureAtlasSubTexture.endT, textureAtlasIndex }); // Top-Right
 
 						unsigned int offsetStart = vertices.size() - 1;
 

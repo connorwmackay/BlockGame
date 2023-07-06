@@ -14,6 +14,7 @@
 #include "meshComponent.h"
 #include "transformComponent.h"
 #include "world.h"
+#include "light.h"
 
 void GLAPIENTRY
 MessageCallback(GLenum source,
@@ -64,11 +65,13 @@ Game::Game()
 	ImGui_ImplOpenGL3_Init(glsl_version);
 
 	// OpenGL Settings
+#ifdef _DEBUG
 	glEnable(GL_DEBUG_OUTPUT);
+	glDebugMessageCallback(MessageCallback, 0);
+#endif
+
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
-
-	glDebugMessageCallback(MessageCallback, 0);
 }
 
 void Game::Run()
@@ -98,13 +101,20 @@ void Game::Run()
 
 	World world = World(glm::vec3(0.0f, 0.0f, 0.0f), 5);
 
+	DirectionalLight directionalLight{};
+	directionalLight.direction = glm::vec3(-0.2f, -1.0f, -0.3f);
+	directionalLight.ambient = glm::vec3(0.5f, 0.5f, 0.5f);
+	directionalLight.specular = glm::vec3(0.5f, 0.5f, 0.5f);
+	directionalLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
+
 	glm::mat4 oldView = glm::mat4(1.0f);
 	for (Chunk* chunk : world.GetWorld())
 	{
 		chunk->Start();
 		MeshComponent* meshComponent = static_cast<MeshComponent*>(chunk->GetComponentByName("mesh"));
 		meshComponent->SetProjection(perspective);
-		meshComponent->SetView(oldView);
+		meshComponent->SetView(glm::vec3(0.0f), oldView);
+		meshComponent->SetDirectionalLight(directionalLight);
 	}
 
 	FreeFormController freeFormController = FreeFormController(window, glm::vec3(0.0f, 48.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
@@ -185,7 +195,7 @@ void Game::Run()
 			if (shouldUpdateViews)
 			{
 				MeshComponent* chunkMeshComponent = static_cast<MeshComponent*>(chunk->GetComponentByName("mesh"));
-				chunkMeshComponent->SetView(view);
+				chunkMeshComponent->SetView(freeFormTransform->GetTranslation(), view);
 			}
 
 			chunk->Draw();

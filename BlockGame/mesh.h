@@ -12,6 +12,9 @@ struct Vertex
 	float x;
 	float y;
 	float z;
+	float normalX;
+	float normalY;
+	float normalZ;
 	float s;
 	float t;
 	int textureAtlasZ;
@@ -66,6 +69,11 @@ public:
 	void SetModel(glm::mat4 const& model);
 	void SetView(glm::mat4 const& view);
 	void SetProjection(glm::mat4 const& projection);
+
+
+	void SetViewPos(glm::vec3 const& viewPos);
+
+	shader GetShaderProgram();
 
 	/*
 	 * Draws the mesh to the screen.

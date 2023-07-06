@@ -8,7 +8,9 @@
 
 bool Vertex::operator==(Vertex const& vertex) const
 {
-	bool isEqual = x == vertex.x && y == vertex.y && z == vertex.z && s == vertex.s && t == vertex.t && vertex.textureAtlasZ == textureAtlasZ;
+	bool isEqual = x == vertex.x && y == vertex.y && z == vertex.z &&
+				   normalX == vertex.normalX && normalY == vertex.normalY && normalZ == vertex.normalZ &&
+		           s == vertex.s && t == vertex.t && vertex.textureAtlasZ == textureAtlasZ;
 	return isEqual;
 }
 
@@ -40,15 +42,18 @@ Mesh::Mesh(Texture2DArray* texture)
 
 	// Position of the vertex
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, sizeof(Vertex), (void*)0);
+	// Normal vector for the vertex
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
 	// Texture coordinates for the vertex
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(3 * sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)(6 * sizeof(float)));
 	// Texture Atlas Index
-	glVertexAttribIPointer(2, 1, GL_INT, sizeof(Vertex), (void*)(5 * sizeof(float)));
+	glVertexAttribIPointer(3, 1, GL_INT, sizeof(Vertex), (void*)(8 * sizeof(float)));
 
 	// Enable the vertex attributes
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 	glEnableVertexAttribArray(2);
+	glEnableVertexAttribArray(3);
 
 	shouldUpdateOnGPU.store(false);
 }
@@ -164,6 +169,13 @@ void Mesh::SetProjection(glm::mat4 const& projection)
 	glUniformMatrix4fv(projectionlLoc, 1, GL_FALSE, glm::value_ptr(projection));
 }
 
+void Mesh::SetViewPos(glm::vec3 const& viewPos)
+{
+	glUseProgram(shaderProgram);
+	GLuint viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
+	glUniform3f(viewPosLoc, viewPos.x, viewPos.y, viewPos.z);
+}
+
 void Mesh::Draw()
 {
 	texture_->Bind(GL_TEXTURE0);
@@ -196,4 +208,9 @@ void Mesh::Unload()
 std::vector<Vertex>& Mesh::GetVertices()
 {
 	return vertices_;
+}
+
+shader Mesh::GetShaderProgram()
+{
+	return shaderProgram;
 }
