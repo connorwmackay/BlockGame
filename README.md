@@ -22,7 +22,7 @@ Switched to now use libnoise, you will need to re-download the dependencies.
 # How to Use This Project
 This project uses Visual Studio 2022 and has only been tested on Windows.
 
-1. Download the dependencies for this project here: https://drive.google.com/file/d/1XS9ZxI5qlj_9hXGBJIeZJifyONhMKnU3/view?usp=sharing<br>
+1. Download the dependencies for this project here: https://drive.google.com/drive/folders/1eDN8yw8NPw_SzJ8jSpk-5UMj-r6m_XMQ?usp=sharing<br>
 
 2. Copy the dependencies folder into the folder with the Visual Studio Solution. The copied
 folder should be named "Libraries" and it should contain several folders.
