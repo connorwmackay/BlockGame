@@ -20,7 +20,7 @@ Switched to now use libnoise, you will need to re-download the dependencies.
 - Directional light (no shadows)
 
 # How to Use This Project
-This project uses Visual Studio 2022 and has only been tested on Windows.
+This project uses Visual Studio 2022 and has only been tested on Windows. If you get an error when building in Release mode, try updating to the latest version of Visual Studio 2022. I use a 64-bit compiled version of libnoise and it was compiled in VS2022. I plan of switching to FastNoise fully at some point if it supports everything libnoise does since libnoise uses a lot of memory and is much less performant.
 
 1. Download the dependencies for this project here: https://drive.google.com/drive/folders/1eDN8yw8NPw_SzJ8jSpk-5UMj-r6m_XMQ?usp=sharing<br>
 
