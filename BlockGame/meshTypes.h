@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 
+#include "light.h"
 #include "shader.h"
 
 /*
@@ -17,5 +18,6 @@ struct MeshTypeCommonData
 	glm::vec3 viewPos;
 	glm::mat4 view;
 	glm::mat4 projection;
+	DirectionalLight directionalLight;
 	shader shaderProgram;
 };

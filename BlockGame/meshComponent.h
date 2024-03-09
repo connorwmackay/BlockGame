@@ -10,6 +10,7 @@ class MeshComponent : public Component
 protected:
 	Mesh* mesh_;
 	glm::mat4 model_;
+	DirectionalLight directionalLight_;
 public:
 	MeshComponent();
 	MeshComponent(Entity* owner, Mesh* mesh);
@@ -18,8 +19,6 @@ public:
 
 	void Draw();
 	void SetModel(glm::mat4 const& model);
-
-	void SetDirectionalLight(DirectionalLight const& light);
 
 	Mesh* GetMesh();
 

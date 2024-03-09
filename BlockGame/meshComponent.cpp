@@ -34,11 +34,6 @@ void MeshComponent::SetModel(glm::mat4 const& model)
 	mesh_->SetModel(model);
 }
 
-void MeshComponent::SetDirectionalLight(DirectionalLight const& light)
-{
-	PassDirectionalLightToShader(mesh_->GetShaderProgram(), light);
-}
-
 Mesh* MeshComponent::GetMesh()
 {
 	return mesh_;

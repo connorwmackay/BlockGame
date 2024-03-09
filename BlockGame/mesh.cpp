@@ -238,6 +238,9 @@ void Mesh::SetCommonData(MeshType type, MeshTypeCommonData commonData)
 	unsigned int projectionlLoc = glGetUniformLocation(shaderProgram, "projection");
 	glUniformMatrix4fv(projectionlLoc, 1, GL_FALSE, glm::value_ptr(commonData.projection));
 
+	// Set Directional Light
+	PassDirectionalLightToShader(shaderProgram, commonData.directionalLight);
+
 	// Pass Data to the Static HashMap
 	commonData_.insert_or_assign(type, commonData);
 }

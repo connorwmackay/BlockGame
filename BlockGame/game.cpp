@@ -104,12 +104,6 @@ void Game::Run()
 	// Setup Chunk Batching Data
 	Mesh::CreateCommonData(MeshType::Chunk);
 
-	MeshTypeCommonData ChunkCommonData = Mesh::GetCommonData(MeshType::Chunk);
-	ChunkCommonData.projection = perspective;
-	ChunkCommonData.view = oldView;
-	ChunkCommonData.viewPos = glm::vec3(0.0f);
-	Mesh::SetCommonData(MeshType::Chunk, ChunkCommonData);
-
 	World world = World(glm::vec3(0.0f, 0.0f, 0.0f), 5);
 
 	DirectionalLight directionalLight{};
@@ -118,11 +112,17 @@ void Game::Run()
 	directionalLight.specular = glm::vec3(0.5f, 0.5f, 0.5f);
 	directionalLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
 
+	MeshTypeCommonData ChunkCommonData = Mesh::GetCommonData(MeshType::Chunk);
+	ChunkCommonData.projection = perspective;
+	ChunkCommonData.view = oldView;
+	ChunkCommonData.viewPos = glm::vec3(0.0f);
+	ChunkCommonData.directionalLight = directionalLight;
+	Mesh::SetCommonData(MeshType::Chunk, ChunkCommonData);
+
 	for (Chunk* chunk : world.GetWorld())
 	{
 		chunk->Start();
 		MeshComponent* meshComponent = static_cast<MeshComponent*>(chunk->GetComponentByName("mesh"));
-		meshComponent->SetDirectionalLight(directionalLight);
 	}
 
 	FreeFormController freeFormController = FreeFormController(window, glm::vec3(0.0f, 48.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
