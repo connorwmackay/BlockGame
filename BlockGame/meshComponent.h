@@ -9,6 +9,7 @@ class MeshComponent : public Component
 {
 protected:
 	Mesh* mesh_;
+	glm::mat4 model_;
 public:
 	MeshComponent();
 	MeshComponent(Entity* owner, Mesh* mesh);
@@ -17,8 +18,6 @@ public:
 
 	void Draw();
 	void SetModel(glm::mat4 const& model);
-	void SetView(glm::vec3 const& viewPos, glm::mat4 const& view);
-	void SetProjection(glm::mat4 const& projection);
 
 	void SetDirectionalLight(DirectionalLight const& light);
 

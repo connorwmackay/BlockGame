@@ -186,6 +186,7 @@
     <ClInclude Include="logging.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="meshComponent.h" />
+    <ClInclude Include="meshTypes.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="texture.h" />

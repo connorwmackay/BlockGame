@@ -6,6 +6,8 @@
 
 #include "logging.h"
 
+std::unordered_map<MeshType, MeshTypeCommonData> Mesh::commonData_;
+
 bool Vertex::operator==(Vertex const& vertex) const
 {
 	bool isEqual = x == vertex.x && y == vertex.y && z == vertex.z &&
@@ -17,18 +19,17 @@ bool Vertex::operator==(Vertex const& vertex) const
 Mesh::Mesh()
 {}
 
-Mesh::Mesh(Texture2DArray* texture)
+Mesh::Mesh(Texture2DArray* texture, const MeshType& type)
 {
 	vertices_ = std::vector<Vertex>();
 	indices_ = std::vector<unsigned int>();
 	texture_ = texture;
+	type_ = type;
 
-	shaderProgram = CreateShader("./Assets/mesh.vert", "./Assets/mesh.frag");
-
-	glUseProgram(shaderProgram);
+	glUseProgram(commonData_.at(type_).shaderProgram);
 
 	// Tell the shader which texture unit to use.
-	unsigned int textureLoc = glGetUniformLocation(shaderProgram, "texture1");
+	unsigned int textureLoc = glGetUniformLocation(commonData_.at(type_).shaderProgram, "texture1");
 	glUniform1i(textureLoc, 0);
 
 	// Create the vao, vbo and ebo
@@ -150,34 +151,31 @@ int Mesh::GetNumVertices()
 
 void Mesh::SetModel(glm::mat4 const& model)
 {
+	shader shaderProgram = commonData_.at(type_).shaderProgram;
 	glUseProgram(shaderProgram);
 	unsigned int modelLoc = glGetUniformLocation(shaderProgram, "model");
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 }
 
-void Mesh::SetView(glm::mat4 const& view)
+void Mesh::StartDrawBatch(const MeshType& type)
 {
-	glUseProgram(shaderProgram);
-	unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
-	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+	const MeshTypeCommonData& commonData = commonData_.at(type);
+	glUseProgram(commonData.shaderProgram);
 }
 
-void Mesh::SetProjection(glm::mat4 const& projection)
+void Mesh::EndDrawBatch()
 {
-	glUseProgram(shaderProgram);
-	unsigned int projectionlLoc = glGetUniformLocation(shaderProgram, "projection");
-	glUniformMatrix4fv(projectionlLoc, 1, GL_FALSE, glm::value_ptr(projection));
+	glUseProgram(0);
 }
 
-void Mesh::SetViewPos(glm::vec3 const& viewPos)
+void Mesh::Draw(glm::mat4 const& model)
 {
-	glUseProgram(shaderProgram);
-	GLuint viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
-	glUniform3f(viewPosLoc, viewPos.x, viewPos.y, viewPos.z);
-}
+	// Since I use batching, this needs to be specified :-
+	unsigned int textureLoc = glGetUniformLocation(commonData_.at(type_).shaderProgram, "texture1");
+	glUniform1i(textureLoc, 0);
 
-void Mesh::Draw()
-{
+	SetModel(model);
+
 	texture_->Bind(GL_TEXTURE0);
 
 	glBindVertexArray(vao_);
@@ -191,7 +189,6 @@ void Mesh::Draw()
 	}
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
-	glUseProgram(shaderProgram);
 	glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, nullptr);
 
 	texture_->Unbind(GL_TEXTURE0);
@@ -210,7 +207,47 @@ std::vector<Vertex>& Mesh::GetVertices()
 	return vertices_;
 }
 
+const MeshType& Mesh::GetMeshType()
+{
+	return type_;
+}
+
+void Mesh::CreateCommonData(MeshType type)
+{
+	MeshTypeCommonData commonData{};
+	commonData.shaderProgram = CreateShader("./Assets/mesh.vert", "./Assets/mesh.frag");
+
+	SetCommonData(type, commonData);
+}
+
+void Mesh::SetCommonData(MeshType type, MeshTypeCommonData commonData)
+{
+	shader shaderProgram = commonData.shaderProgram;
+	glUseProgram(shaderProgram);
+
+	// Update View Position (For Lighting in Fragment Shader)
+	GLuint viewPosLoc = glGetUniformLocation(shaderProgram, "viewPos");
+	glUniform3f(viewPosLoc, commonData.viewPos.x, commonData.viewPos.y, commonData.viewPos.z);
+
+
+	// Update View Matrix (For Vertex Shader)
+	unsigned int viewLoc = glGetUniformLocation(shaderProgram, "view");
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(commonData.view));
+
+	// Update Projection Matrix (For Vertex Shader)
+	unsigned int projectionlLoc = glGetUniformLocation(shaderProgram, "projection");
+	glUniformMatrix4fv(projectionlLoc, 1, GL_FALSE, glm::value_ptr(commonData.projection));
+
+	// Pass Data to the Static HashMap
+	commonData_.insert_or_assign(type, commonData);
+}
+
+const MeshTypeCommonData& Mesh::GetCommonData(const MeshType& type)
+{
+	return commonData_.at(type);
+}
+
 shader Mesh::GetShaderProgram()
 {
-	return shaderProgram;
+	return commonData_.at(type_).shaderProgram;
 }

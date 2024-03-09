@@ -99,6 +99,17 @@ void Game::Run()
 	float fov = 60.0f;
 	perspective = glm::perspective(glm::radians(fov), (GLfloat)((float)width / (float)height), zNear, zFar);
 
+	glm::mat4 oldView = glm::mat4(1.0f);
+
+	// Setup Chunk Batching Data
+	Mesh::CreateCommonData(MeshType::Chunk);
+
+	MeshTypeCommonData ChunkCommonData = Mesh::GetCommonData(MeshType::Chunk);
+	ChunkCommonData.projection = perspective;
+	ChunkCommonData.view = oldView;
+	ChunkCommonData.viewPos = glm::vec3(0.0f);
+	Mesh::SetCommonData(MeshType::Chunk, ChunkCommonData);
+
 	World world = World(glm::vec3(0.0f, 0.0f, 0.0f), 5);
 
 	DirectionalLight directionalLight{};
@@ -107,13 +118,10 @@ void Game::Run()
 	directionalLight.specular = glm::vec3(0.5f, 0.5f, 0.5f);
 	directionalLight.diffuse = glm::vec3(1.0f, 1.0f, 1.0f);
 
-	glm::mat4 oldView = glm::mat4(1.0f);
 	for (Chunk* chunk : world.GetWorld())
 	{
 		chunk->Start();
 		MeshComponent* meshComponent = static_cast<MeshComponent*>(chunk->GetComponentByName("mesh"));
-		meshComponent->SetProjection(perspective);
-		meshComponent->SetView(glm::vec3(0.0f), oldView);
 		meshComponent->SetDirectionalLight(directionalLight);
 	}
 
@@ -182,7 +190,6 @@ void Game::Run()
 			float aspectRatio = width / height;
 			Frustum frustum = CreateFrustum(freeFormTransform, fov, aspectRatio, zNear, zFar);
 			world.FrustumCullChunks(frustum);
-
 		}
 
 		debugInfo.EndUpdate();
@@ -190,16 +197,21 @@ void Game::Run()
 
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+		// Set the Chunk Batching Data
+		if (shouldUpdateViews) {
+			MeshTypeCommonData ChunkCommonData = Mesh::GetCommonData(MeshType::Chunk);
+			ChunkCommonData.projection = perspective;
+			ChunkCommonData.view = view;
+			ChunkCommonData.viewPos = freeFormTransform->GetTranslation();
+			Mesh::SetCommonData(MeshType::Chunk, ChunkCommonData);
+		}
+
+		Mesh::StartDrawBatch(MeshType::Chunk);
 		for (auto chunk : world.GetWorld())
 		{
-			if (shouldUpdateViews)
-			{
-				MeshComponent* chunkMeshComponent = static_cast<MeshComponent*>(chunk->GetComponentByName("mesh"));
-				chunkMeshComponent->SetView(freeFormTransform->GetTranslation(), view);
-			}
-
 			chunk->Draw();
 		}
+		Mesh::EndDrawBatch();
 
 		// Display Game
 		ImGui::Render();

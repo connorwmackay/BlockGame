@@ -25,22 +25,13 @@ void MeshComponent::Start()
 
 void MeshComponent::Draw()
 {
-	mesh_->Draw();
+	mesh_->Draw(model_);
 }
 
 void MeshComponent::SetModel(glm::mat4 const& model)
 {
+	model_ = model;
 	mesh_->SetModel(model);
-}
-
-void MeshComponent::SetView(glm::vec3 const& viewPos, glm::mat4 const& view)
-{
-	mesh_->SetViewPos(viewPos);
-	mesh_->SetView(view);
-}
-void MeshComponent::SetProjection(glm::mat4 const& projection)
-{
-	mesh_->SetProjection(projection);
 }
 
 void MeshComponent::SetDirectionalLight(DirectionalLight const& light)

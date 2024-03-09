@@ -33,9 +33,7 @@ Chunk::Chunk(World* world, Biome biome, Texture2DArray texture, std::vector<floa
 	UseNoise(chunkSectionNoise, minY, maxY);
 	UpdateBlocks();
 
-	
-
-	AddComponent("mesh", new MeshComponent(this, new Mesh(&texture_)));
+	AddComponent("mesh", new MeshComponent(this, new Mesh(&texture_, MeshType::Chunk)));
 	meshComponent = static_cast<MeshComponent*>(GetComponentByName("mesh"));
 	TextureAtlas textureAtlas = { 8, 6 };
 
