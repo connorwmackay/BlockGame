@@ -15,6 +15,7 @@
 #include "transformComponent.h"
 #include "world.h"
 #include "light.h"
+#include "playerController.h"
 
 void GLAPIENTRY
 MessageCallback(GLenum source,
@@ -125,10 +126,10 @@ void Game::Run()
 		MeshComponent* meshComponent = static_cast<MeshComponent*>(chunk->GetComponentByName("mesh"));
 	}
 
-	FreeFormController freeFormController = FreeFormController(window, glm::vec3(0.0f, 48.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-	freeFormController.Start();
+	PlayerController playerController = PlayerController(window, glm::vec3(0.0f, 48.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	playerController.Start();
 
-	TransformComponent* freeFormTransform = static_cast<TransformComponent*>(freeFormController.GetComponentByName("transform"));
+	TransformComponent* playerTransform = static_cast<TransformComponent*>(playerController.GetComponentByName("transform"));
 
 	std::thread regenerateThread;
 
@@ -156,17 +157,17 @@ void Game::Run()
 
 		ImGui::SetNextWindowPos(ImVec2(8.0f, 8.0f));
 		ImGui::Begin("Debug Information", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
-		debugInfo.Display(freeFormTransform->GetTranslation(), &world);
+		debugInfo.Display(playerTransform->GetTranslation(), &world);
 		ImGui::End();
 
-		world.Update(freeFormTransform->GetTranslation());
+		world.Update(playerTransform->GetTranslation());
 
 		for (Chunk* chunk : world.GetWorld())
 		{
 			chunk->Update();
 		}
 
-		freeFormController.Update(&world);
+		playerController.Update(&world);
 
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -177,9 +178,10 @@ void Game::Run()
 			shouldShowDebugInfo = !shouldShowDebugInfo;
 		}
 
-		CameraComponent* cameraComponent = static_cast<CameraComponent*>(freeFormController.GetComponentByName("camera"));
-		TransformComponent* transformComponent = static_cast<TransformComponent*>(freeFormController.GetComponentByName("transform"));
-		glm::mat4 view = cameraComponent->GetView(transformComponent);
+		CameraComponent* cameraComponent = static_cast<CameraComponent*>(playerController.GetComponentByName("camera"));
+		TransformComponent* transformComponent = static_cast<TransformComponent*>(playerController.GetComponentByName("transform"));
+		TransformComponent* cameraTransform = static_cast<TransformComponent*>(playerController.GetComponentByName("cameraTransform"));
+		glm::mat4 view = cameraComponent->GetView(cameraTransform);
 
 		bool shouldUpdateViews = false;
 		if (view != oldView)
@@ -188,7 +190,7 @@ void Game::Run()
 			int width, height;
 			glfwGetWindowSize(window, &width, &height);
 			float aspectRatio = width / height;
-			Frustum frustum = CreateFrustum(freeFormTransform, fov, aspectRatio, zNear, zFar);
+			Frustum frustum = CreateFrustum(playerTransform, fov, aspectRatio, zNear, zFar);
 			world.FrustumCullChunks(frustum);
 		}
 
@@ -202,7 +204,7 @@ void Game::Run()
 			MeshTypeCommonData ChunkCommonData = Mesh::GetCommonData(MeshType::Chunk);
 			ChunkCommonData.projection = perspective;
 			ChunkCommonData.view = view;
-			ChunkCommonData.viewPos = freeFormTransform->GetTranslation();
+			ChunkCommonData.viewPos = cameraTransform->GetTranslation();
 			Mesh::SetCommonData(MeshType::Chunk, ChunkCommonData);
 		}
 

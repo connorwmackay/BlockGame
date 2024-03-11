@@ -440,13 +440,16 @@ int World::NumChunksCulled()
 bool World::IsCollidingWithWorld(CollisionDetection::CollisionBox collisionBox) {
 	bool isColliding = false;
 
-	// TODO: Is there a quicker way to iterate through this?
 	for (Chunk* chunk : GetWorld())
 	{
-		for (CollisionDetection::CollisionBox& chunkCollisionbox : chunk->GetCollisionBoxes()) {
-			if (CollisionDetection::isOverlapping(chunkCollisionbox, collisionBox)) {
-				isColliding = true;
-				break;
+		float distanceToChunk = glm::distance(collisionBox.origin, chunk->GetTransformComponent()->GetTranslation());
+
+		if (distanceToChunk <= 16.0f) { // No point in checking chunks that are too far away from the collision box
+			for (CollisionDetection::CollisionBox& chunkCollisionbox : chunk->GetCollisionBoxes()) {
+				if (CollisionDetection::isOverlapping(chunkCollisionbox, collisionBox)) {
+					isColliding = true;
+					break;
+				}
 			}
 		}
 	}
