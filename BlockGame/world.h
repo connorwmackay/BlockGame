@@ -76,4 +76,6 @@ public:
 
 	void FrustumCullChunks(const Frustum& frustum);
 	int NumChunksCulled();
+
+	bool IsCollidingWithWorld(CollisionDetection::CollisionBox collisionBox);
 };

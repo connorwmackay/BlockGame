@@ -9,18 +9,23 @@
 
 #include "world.h"
 
-class FreeFormController : public Entity
+class PlayerController : public Entity
 {
 protected:
 	TransformComponent* transformComponent_;
+	TransformComponent* cameraTransformComponent_;
 	CameraComponent* cameraComponent_;
 	GLFWwindow* window_;
 
 	float moveSpeed_;
+	float jumpForce_;
 	float sensitivity_;
+	float gravity_;
 	double prevMouseXPos_, prevMouseYPos_;
+
+	bool hasJustPressedJump;
 public:
-	FreeFormController(GLFWwindow* window, glm::vec3 position, glm::vec3 rotation);
+	PlayerController(GLFWwindow* window, glm::vec3 position, glm::vec3 rotation);
 
 	void Start() override;
 	void Update(World* world);

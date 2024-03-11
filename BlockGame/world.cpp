@@ -436,3 +436,23 @@ int World::NumChunksCulled()
 	}
 	return numChunksCulled;
 }
+
+bool World::IsCollidingWithWorld(CollisionDetection::CollisionBox collisionBox) {
+	bool isColliding = false;
+
+	for (Chunk* chunk : GetWorld())
+	{
+		float distanceToChunk = glm::distance(collisionBox.origin, chunk->GetTransformComponent()->GetTranslation());
+
+		if (distanceToChunk <= 16.0f) { // No point in checking chunks that are too far away from the collision box
+			for (CollisionDetection::CollisionBox& chunkCollisionbox : chunk->GetCollisionBoxes()) {
+				if (CollisionDetection::isOverlapping(chunkCollisionbox, collisionBox)) {
+					isColliding = true;
+					break;
+				}
+			}
+		}
+	}
+
+	return isColliding;
+}

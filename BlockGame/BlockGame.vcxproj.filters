@@ -87,6 +87,12 @@
     <ClCompile Include="frustum.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="collisionDetection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="playerController.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="logging.h">
@@ -143,6 +149,9 @@
     <ClInclude Include="meshTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="playerController.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Libraries\FastNoise2\bin\FastNoise.dll">
@@ -165,5 +174,10 @@
     <ResourceCompile Include="BlockGame.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="collisionDetection.h">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

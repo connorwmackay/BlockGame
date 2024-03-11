@@ -10,6 +10,8 @@
 #include "mesh.h"
 #include "transformComponent.h"
 #include "meshComponent.h"
+#include "collisionDetection.h"
+
 
 #include <random>
 
@@ -56,6 +58,8 @@ class Chunk : public Entity
 	std::vector<glm::vec3> treeTrunkPositions_;
 	std::vector<glm::vec3> treeLeavePositions_;
 
+	std::vector<CollisionDetection::CollisionBox> collisionBoxes;
+
 	World* world_;
 
 	bool shouldDraw_;
@@ -89,4 +93,6 @@ public:
 	bool GetShouldDraw();
 
 	TransformComponent* GetTransformComponent();
+
+	std::vector<CollisionDetection::CollisionBox>& GetCollisionBoxes();
 };
