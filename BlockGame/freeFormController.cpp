@@ -20,7 +20,7 @@ void FreeFormController::Start()
 {
 }
 
-void FreeFormController::Update()
+void FreeFormController::Update(World* world)
 {
 	// Check for Forward/Backward, Left/Right Movement
 	glm::vec3 currentTranslation = transformComponent_->GetTranslation();
@@ -53,7 +53,14 @@ void FreeFormController::Update()
 		currentTranslation += transformComponent_->GetUpVector() * moveSpeed_ * -1.0f;
 	}
 
-	transformComponent_->SetTranslation(currentTranslation);
+	CollisionDetection::CollisionBox box = getCollisionBox();
+	box.origin = { currentTranslation.x, currentTranslation.y - 1.4f, currentTranslation.z };
+
+	bool willCollide = world->IsCollidingWithWorld(box);
+
+	if (!willCollide) {
+		transformComponent_->SetTranslation(currentTranslation);
+	}
 
 	// Check for Mouse changes
 	double mouseXPos, mouseYPos;
@@ -69,4 +76,15 @@ void FreeFormController::Update()
 
 	prevMouseXPos_ = mouseXPos;
 	prevMouseYPos_ = mouseYPos;
+}
+
+CollisionDetection::CollisionBox FreeFormController::getCollisionBox() {
+	CollisionDetection::CollisionBox box{};
+	glm::vec3 pos = transformComponent_->GetTranslation();
+	pos.y -= 1.4f;
+
+	box.origin = pos;
+	box.size = glm::vec3(0.8f, 1.8f, 0.8f);
+
+	return box;
 }

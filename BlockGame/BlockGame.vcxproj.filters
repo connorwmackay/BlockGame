@@ -87,6 +87,9 @@
     <ClCompile Include="frustum.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="collisionDetection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="logging.h">
@@ -165,5 +168,10 @@
     <ResourceCompile Include="BlockGame.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="collisionDetection.h">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

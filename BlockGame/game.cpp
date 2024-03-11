@@ -166,7 +166,7 @@ void Game::Run()
 			chunk->Update();
 		}
 
-		freeFormController.Update();
+		freeFormController.Update(&world);
 
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -256,6 +256,7 @@ DebugInfo::DebugInfo()
 	glMajorVersion = -1;
 	glMinorVersion = -1;
 	averageFrameTime = 0.0f;
+	isPlayerColliding = false;
 }
 
 void DebugInfo::StartRender()
@@ -372,9 +373,20 @@ void DebugInfo::Display(const glm::vec3& playerPos, World* world)
 		vsync << "VSync: On";
 	}
 
+	/*
+	std::stringstream collision;
+	if (isPlayerColliding) {
+		collision << "Player is Colliding";
+	}
+	else {
+		collision << "Player is Not Colliding";
+	}
+	*/
+
 	ImGui::Text(glVersion.str().c_str());
 	ImGui::Text(fpsData.str().c_str());
 	ImGui::Text(vsync.str().c_str());
+	//ImGui::Text(collision.str().c_str());
 
 	ImGui::SeparatorText("Game Data:");
 

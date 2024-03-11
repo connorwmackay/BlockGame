@@ -528,6 +528,31 @@ bool Chunk::UpdateBlocks()
 		}
 	}
 
+	// Update Collision Data
+	collisionBoxes.clear();
+	glm::vec3 pos = transformComponent->GetTranslation();
+	pos.x -= size_/2;
+	pos.y -= size_ / 2;
+	pos.z -= size_ / 2;
+
+	for (int z = 0; z < size_.load(); z++)
+	{
+		for (int x = 0; x < size_.load(); x++)
+		{
+			for (int y = 0; y < size_.load(); y++)
+			{
+				uint8_t blockType = blocks_.at(z).at(x).at(y);
+				if (blockType != BLOCK_TYPE_AIR) {
+
+					collisionBoxes.push_back({
+						glm::vec3(x + pos.x, y + pos.y, z + pos.z),
+						glm::vec3(1.0f, 1.0f, 1.0f)
+					});
+				}
+			}
+		}
+	}
+
 	return hasUpdatedBlocks;
 }
 
@@ -539,4 +564,8 @@ void Chunk::SetShouldDraw(bool shouldDraw)
 bool Chunk::GetShouldDraw()
 {
 	return shouldDraw_;
+}
+
+std::vector<CollisionDetection::CollisionBox>& Chunk::GetCollisionBoxes() {
+	return collisionBoxes;
 }

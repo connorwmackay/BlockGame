@@ -5,6 +5,9 @@
 #include "cameraComponent.h"
 #include "entity.h"
 #include "transformComponent.h"
+#include "collisionDetection.h"
+
+#include "world.h"
 
 class FreeFormController : public Entity
 {
@@ -20,5 +23,7 @@ public:
 	FreeFormController(GLFWwindow* window, glm::vec3 position, glm::vec3 rotation);
 
 	void Start() override;
-	void Update() override;
+	void Update(World* world);
+
+	CollisionDetection::CollisionBox getCollisionBox();
 };

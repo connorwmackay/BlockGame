@@ -436,3 +436,20 @@ int World::NumChunksCulled()
 	}
 	return numChunksCulled;
 }
+
+bool World::IsCollidingWithWorld(CollisionDetection::CollisionBox collisionBox) {
+	bool isColliding = false;
+
+	// TODO: Is there a quicker way to iterate through this?
+	for (Chunk* chunk : GetWorld())
+	{
+		for (CollisionDetection::CollisionBox& chunkCollisionbox : chunk->GetCollisionBoxes()) {
+			if (CollisionDetection::isOverlapping(chunkCollisionbox, collisionBox)) {
+				isColliding = true;
+				break;
+			}
+		}
+	}
+
+	return isColliding;
+}
