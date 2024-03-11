@@ -15,10 +15,11 @@ PlayerController::PlayerController(GLFWwindow* window, glm::vec3 position, glm::
 
 	window_ = window;
 
-	moveSpeed_ = 0.05f;
+	moveSpeed_ = 0.02f;
 	sensitivity_ = 0.05f;
 	gravity_ = 0.0981f;
-	jumpForce_ = 0.2f;
+	jumpForce_ = 1.5f;
+	hasJustPressedJump = false;
 }
 
 void PlayerController::Start()
@@ -66,12 +67,6 @@ void PlayerController::Update(World* world)
 		currentTranslation += transformComponent_->GetRightVector() * moveSpeed_;
 	}
 
-	// Jump
-	if (glfwGetKey(window_, GLFW_KEY_SPACE) == GLFW_PRESS)
-	{
-		currentTranslation += transformComponent_->GetUpVector() * jumpForce_;
-	}
-
 	box = getCollisionBox();
 	boxOffset = 1.4f;
 	box.origin = { currentTranslation.x, currentTranslation.y - boxOffset, currentTranslation.z };
@@ -81,6 +76,31 @@ void PlayerController::Update(World* world)
 	if (!willCollide) {
 		transformComponent_->SetTranslation(currentTranslation);
 		cameraTransformComponent_->SetTranslation(currentTranslation);
+	}
+
+	if (glfwGetKey(window_, GLFW_KEY_SPACE) == GLFW_RELEASE && hasJustPressedJump)
+	{
+		hasJustPressedJump = false;
+	}
+
+	// Jump
+	if (glfwGetKey(window_, GLFW_KEY_SPACE) == GLFW_PRESS && !hasJustPressedJump)
+	{
+		hasJustPressedJump = true;
+
+		currentTranslation = transformComponent_->GetTranslation();
+		currentTranslation += transformComponent_->GetUpVector() * jumpForce_;
+
+		box = getCollisionBox();
+		boxOffset = 1.4f;
+		box.origin = { currentTranslation.x, currentTranslation.y - boxOffset, currentTranslation.z };
+
+		willCollide = world->IsCollidingWithWorld(box);
+
+		if (!willCollide) {
+			transformComponent_->SetTranslation(currentTranslation);
+			cameraTransformComponent_->SetTranslation(currentTranslation);
+		}
 	}
 
 	// Check for Mouse changes

@@ -22,6 +22,8 @@ protected:
 	float sensitivity_;
 	float gravity_;
 	double prevMouseXPos_, prevMouseYPos_;
+
+	bool hasJustPressedJump;
 public:
 	PlayerController(GLFWwindow* window, glm::vec3 position, glm::vec3 rotation);
 
