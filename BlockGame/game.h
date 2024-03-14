@@ -39,8 +39,6 @@ struct DebugInfo
 	int glMinorVersion;
 	int swapInterval;
 
-	bool isPlayerColliding;
-
 	DebugInfo();
 	void Display(const glm::vec3& playerPos, World* world);
 	void StartFrame();
