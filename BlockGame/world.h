@@ -77,5 +77,8 @@ public:
 	void FrustumCullChunks(const Frustum& frustum);
 	int NumChunksCulled();
 
-	bool IsCollidingWithWorld(CollisionDetection::CollisionBox collisionBox);
+	std::vector<Chunk*> GetChunksInsideArea(glm::vec3 origin, glm::vec3 size);
+
+	bool IsCollidingWithWorld(CollisionDetection::CollisionBox collisionBox, CollisionDetection::CollisionBox& hitBoxOut);
+	bool PerformRaycast(CollisionDetection::RaycastHit& hitOut, glm::vec3 hitStart, glm::vec3 direction, float distance, float stepColliderSize, int numSteps);
 };

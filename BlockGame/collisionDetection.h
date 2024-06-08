@@ -1,6 +1,9 @@
 #pragma once
 
+#include <vector>
 #include <glm/glm.hpp>
+
+class World;
 
 namespace CollisionDetection {
 
@@ -12,6 +15,11 @@ namespace CollisionDetection {
 	struct CollisionBoxBounds {
 		glm::vec3 min;
 		glm::vec3 max;
+	};
+
+	struct RaycastHit
+	{
+		CollisionBox hit;
 	};
 
 	CollisionBoxBounds getCollisionBoxBounds(CollisionBox box);

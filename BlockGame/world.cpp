@@ -437,22 +437,69 @@ int World::NumChunksCulled()
 	return numChunksCulled;
 }
 
-bool World::IsCollidingWithWorld(CollisionDetection::CollisionBox collisionBox) {
+bool World::IsCollidingWithWorld(CollisionDetection::CollisionBox collisionBox, CollisionDetection::CollisionBox& hitBoxOut) {
 	bool isColliding = false;
 
-	for (Chunk* chunk : GetWorld())
-	{
-		float distanceToChunk = glm::distance(collisionBox.origin, chunk->GetTransformComponent()->GetTranslation());
+	std::vector<Chunk*> chunksToCheck = GetChunksInsideArea(collisionBox.origin, collisionBox.size);
 
-		if (distanceToChunk <= 16.0f) { // No point in checking chunks that are too far away from the collision box
-			for (CollisionDetection::CollisionBox& chunkCollisionbox : chunk->GetCollisionBoxes()) {
-				if (CollisionDetection::isOverlapping(chunkCollisionbox, collisionBox)) {
-					isColliding = true;
-					break;
-				}
+	int numChunksChecked = 0;
+	for (Chunk* chunk : chunksToCheck)
+	{
+		
+		for (CollisionDetection::CollisionBox& chunkCollisionbox : chunk->GetCollisionBoxes()) {
+			if (CollisionDetection::isOverlapping(chunkCollisionbox, collisionBox)) {
+				hitBoxOut = chunkCollisionbox;
+				isColliding = true;
+				break;
 			}
 		}
+
+		numChunksChecked++;
 	}
 
 	return isColliding;
+}
+
+std::vector<Chunk*> World::GetChunksInsideArea(glm::vec3 origin, glm::vec3 size)
+{
+	size += glm::vec3(16.0f, 16.0f, 16.0f);
+
+	std::vector<Chunk*> chunks = std::vector<Chunk*>();
+
+	int numChunksToCheck = 0;
+	for (Chunk* chunk : chunks_)
+	{
+		glm::vec3 chunkSize = chunk->GetTransformComponent()->GetScale() * glm::vec3(0.5f, 0.5f, 0.5f);
+		glm::vec3 chunkOrigin = chunk->GetTransformComponent()->GetTranslation();
+
+		if (CollisionDetection::isOverlapping({chunkOrigin, chunkSize}, { origin, size}))
+		{
+			chunks.push_back(chunk);
+			numChunksToCheck++;
+		}
+	}
+
+	return chunks;
+}
+
+bool World::PerformRaycast(CollisionDetection::RaycastHit& hitOut, glm::vec3 hitStart, glm::vec3 direction, float distance, float stepColliderSize, int numSteps)
+{
+	float increment = distance / static_cast<float>(numSteps);
+
+	glm::vec3 currentPos = hitStart;
+	for (int curIncrement = 0; curIncrement < numSteps; curIncrement++)
+	{
+		CollisionDetection::CollisionBox stepBox = { currentPos, glm::vec3(stepColliderSize, stepColliderSize, stepColliderSize) };
+		CollisionDetection::CollisionBox hitBox{};
+
+		if (IsCollidingWithWorld(stepBox, hitBox))
+		{
+			hitOut.hit = hitBox;
+			return true;
+		}
+
+		currentPos += direction * increment;
+	}
+
+	return false;
 }

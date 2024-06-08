@@ -56,7 +56,8 @@ void FreeFormController::Update(World* world)
 	CollisionDetection::CollisionBox box = getCollisionBox();
 	box.origin = { currentTranslation.x, currentTranslation.y - 1.4f, currentTranslation.z };
 
-	bool willCollide = world->IsCollidingWithWorld(box);
+	CollisionDetection::CollisionBox hitBox{};
+	bool willCollide = world->IsCollidingWithWorld(box, hitBox);
 
 	if (!willCollide) {
 		transformComponent_->SetTranslation(currentTranslation);

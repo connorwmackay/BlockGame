@@ -3,16 +3,24 @@
 #include <memory>
 
 #include "logging.h"
+#include "world.h"
 
 Entity::Entity()
 {
 	id_ = Entity::NewId();
 	components_ = std::unordered_map<std::string, Component*>();
+	children_ = std::vector<Entity*>();
+	parent_ = nullptr;
 }
 
 void Entity::Start()
 {
 	
+}
+
+void Entity::Update(World* world)
+{
+	Update();
 }
 
 void Entity::Update()
@@ -61,4 +69,20 @@ Component* Entity::GetComponentByName(std::string name)
 
 	LOG("Component %s either doesn't exist or was a nullptr\n", name.c_str());
 	return nullptr;
+}
+
+void Entity::SetParent(Entity* parent) {
+	parent_ = parent;
+}
+
+void Entity::AddChild(Entity* child) {
+	children_.push_back(child);
+}
+
+Entity* Entity::GetParent() {
+	return parent_;
+}
+
+std::vector<Entity*> Entity::GetChildren() {
+	return children_;
 }

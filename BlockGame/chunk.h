@@ -67,6 +67,8 @@ protected:
 	bool IsInChunk(int x, int y, int z);
 	
 public:
+	bool needsUpdated;
+
 	Chunk(World* world, Biome biome, Texture2DArray texture, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed);
 
 	void Draw();
@@ -78,6 +80,8 @@ public:
 	// Returns true if any blocks were updated
 	bool UpdateBlocks();
 
+	void UpdateCollisionData();
+
 	void Unload();
 	void Recreate(Biome biome, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 newStartingPosition, int seed, bool isOnMainThread = true);
 
@@ -85,6 +89,8 @@ public:
 
 	bool IsUnloaded();
 	Biome GetBiome();
+
+	void Reload();
 
 	void AddTreeLeavePositions();
 	void AddTreeTrunkPositions();
@@ -95,4 +101,6 @@ public:
 	TransformComponent* GetTransformComponent();
 
 	std::vector<CollisionDetection::CollisionBox>& GetCollisionBoxes();
+
+	void RemoveBlockAt(glm::vec3 worldPosition);
 };
