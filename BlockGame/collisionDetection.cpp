@@ -1,4 +1,5 @@
 #include "collisionDetection.h"
+#include "world.h"
 
 namespace CollisionDetection {
 	CollisionBoxBounds getCollisionBoxBounds(CollisionBox box) {

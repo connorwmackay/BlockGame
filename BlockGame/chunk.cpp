@@ -569,3 +569,21 @@ bool Chunk::GetShouldDraw()
 std::vector<CollisionDetection::CollisionBox>& Chunk::GetCollisionBoxes() {
 	return collisionBoxes;
 }
+
+void Chunk::RemoveBlockAt(glm::vec3 worldPosition)
+{
+	glm::vec3 chunkPosition = worldPosition - transformComponent->GetTranslation();
+	//chunkPosition.x -= size_ / 2;
+	//chunkPosition.y -= size_ / 2;
+	//chunkPosition.z -= size_ / 2;
+
+	if ((chunkPosition.x >= 0.0f && chunkPosition.x < size_) &&
+		(chunkPosition.y >= 0.0f && chunkPosition.y < size_) &&
+		(chunkPosition.z >= 0.0f && chunkPosition.z < size_)) {
+		printf("Block Position <Inside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
+	}
+	else
+	{
+		printf("Block Position <Outside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
+	}
+}

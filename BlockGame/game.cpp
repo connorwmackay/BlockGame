@@ -43,7 +43,7 @@ Game::Game()
 
 	window = glfwCreateWindow(1280, 720, "Block Game", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
-	glfwSwapInterval(0);
+	glfwSwapInterval(1);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -137,6 +137,8 @@ void Game::Run()
 
 	glClearColor(0.0f, 0.3f, 0.5f, 1.0f);
 
+	double startPhysicsUpdateTime = glfwGetTime();
+	double targetPhysicsUpdateTime = 1.0f / 60;
 	while (!glfwWindowShouldClose(window))
 	{
 		debugInfo.StartFrame();
@@ -167,7 +169,11 @@ void Game::Run()
 			chunk->Update();
 		}
 
-		playerController.Update(&world);
+		// Perform Fixed 60 FPS Physics Update
+		if ((glfwGetTime() - startPhysicsUpdateTime) >= targetPhysicsUpdateTime) {
+			playerController.Update(&world);
+			startPhysicsUpdateTime = glfwGetTime();
+		}
 
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
@@ -254,7 +260,7 @@ DebugInfo::DebugInfo()
 	fpsMax = 0.0f;
 	fpsAverage = 0.0f;
 	fpsMin = 0.0f;
-	swapInterval = 0;
+	swapInterval = 1;
 	glMajorVersion = -1;
 	glMinorVersion = -1;
 	averageFrameTime = 0.0f;

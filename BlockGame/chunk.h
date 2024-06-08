@@ -95,4 +95,6 @@ public:
 	TransformComponent* GetTransformComponent();
 
 	std::vector<CollisionDetection::CollisionBox>& GetCollisionBoxes();
+
+	void RemoveBlockAt(glm::vec3 worldPosition);
 };

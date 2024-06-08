@@ -17,13 +17,14 @@ PlayerController::PlayerController(GLFWwindow* window, glm::vec3 position, glm::
 
 	window_ = window;
 
-	moveSpeed_ = 0.03f;
+	moveSpeed_ = 0.2f;
 	sensitivity_ = 0.05f;
-	gravity_ = -0.0981f;
-	jumpForce_ = 0.14f;
-	jumpHeight_ = 1.8f;
+	gravity_ = -0.981f;
+	jumpForce_ = 1.25f;
+	jumpHeight_ = 1.5f;
 	hasJustPressedJump = false;
 	isJumping = false;
+	hasJustPressBreakBlock = false;
 
 	friction_ = 0.95f;
 	velocity_ = glm::vec3(0.0f);
@@ -84,13 +85,14 @@ void PlayerController::Update(World* world)
 
 	// Add Friction For Smoother Stopping
 	velocity_ *= friction_;
+
 	currentTranslation += velocity_;
 
 	glm::vec3 translation = transformComponent_->GetTranslation();
 	// Check Forward / Back / Left / Right Collision
-	if (CanMoveTo(world, { currentTranslation.x, translation.y, currentTranslation.z })) {
-		transformComponent_->SetTranslation({ currentTranslation.x, translation.y, currentTranslation.z });
-		cameraTransformComponent_->SetTranslation({ currentTranslation.x, translation.y, currentTranslation.z });
+	if (CanMoveTo(world, { currentTranslation.x, translation.y, currentTranslation.z})) {
+		transformComponent_->SetTranslation({ currentTranslation.x, translation.y, currentTranslation.z});
+		cameraTransformComponent_->SetTranslation({ currentTranslation.x, translation.y, currentTranslation.z});
 	}
 
 	translation = transformComponent_->GetTranslation();
@@ -124,9 +126,9 @@ void PlayerController::Update(World* world)
 	currentTranslation.y += velocity_.y;
 
 	// Up / Down
-	if (CanMoveTo(world, { translation.x, currentTranslation.y, translation.z })) {
-		transformComponent_->SetTranslation({ translation.x, currentTranslation.y, translation.z });
-		cameraTransformComponent_->SetTranslation({ translation.x, currentTranslation.y, translation.z });
+	if (CanMoveTo(world, { translation.x, currentTranslation.y, translation.z})) {
+		transformComponent_->SetTranslation({ translation.x, currentTranslation.y, translation.z});
+		cameraTransformComponent_->SetTranslation({ translation.x, currentTranslation.y, translation.z});
 	}
 	else if (velocity_.y < 0.0f) {
 		velocity_.y = 0.0f;
@@ -148,6 +150,35 @@ void PlayerController::Update(World* world)
 
 	prevMouseXPos_ = mouseXPos;
 	prevMouseYPos_ = mouseYPos;
+
+	if (glfwGetMouseButton(window_, 0) == GLFW_RELEASE)
+	{
+		hasJustPressBreakBlock = false;
+	}
+
+	if (glfwGetMouseButton(window_, 0) == GLFW_PRESS && !hasJustPressBreakBlock) {
+		hasJustPressBreakBlock = true;
+
+		CollisionDetection::RaycastHit hit{};
+		bool wasHitFound = world->PerformRaycast(hit, cameraTransformComponent_->GetTranslation(), cameraTransformComponent_->GetForwardVector(), 12.0f, 0.1f, 24.0f);
+
+		if (wasHitFound)
+		{
+			printf("Hit\n");
+			std::vector<Chunk*> chunks = world->GetChunksInsideArea(hit.hit.origin, hit.hit.size);
+			printf("Num Chunks: %d\n", chunks.size());
+
+			printf("Hit occured at: (%f, %f, %f)\n", hit.hit.origin.x, hit.hit.origin.y, hit.hit.origin.z);
+
+			for (Chunk* chunk : chunks) {
+				// Only removes block if it is actually in the chunk
+				chunk->RemoveBlockAt(hit.hit.origin);
+			}
+		} else
+		{
+			printf("No Hit\n");
+		}
+	}
 }
 
 CollisionDetection::CollisionBox PlayerController::getCollisionBox() {
@@ -168,7 +199,8 @@ bool PlayerController::CanMoveTo(World* world, glm::vec3 newTranslation) {
 	float boxOffset = 1.4f;
 	box.origin = { newTranslation.x, newTranslation.y - boxOffset, newTranslation.z + 0.4f };
 
-	bool willCollide = world->IsCollidingWithWorld(box);
+	CollisionDetection::CollisionBox hitBox{};
+	bool willCollide = world->IsCollidingWithWorld(box, hitBox);
 
 	return !willCollide;
 }
