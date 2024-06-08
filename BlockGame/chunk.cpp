@@ -14,6 +14,7 @@
 Chunk::Chunk(World* world, Biome biome, Texture2DArray texture, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed)
 	: Entity()
 {
+	needsUpdated = false;
 	shouldDraw_ = true;
 	world_ = world;
 	texture_ = texture;
@@ -528,10 +529,17 @@ bool Chunk::UpdateBlocks()
 		}
 	}
 
+	UpdateCollisionData();
+
+	return hasUpdatedBlocks;
+}
+
+void Chunk::UpdateCollisionData()
+{
 	// Update Collision Data
 	collisionBoxes.clear();
 	glm::vec3 pos = transformComponent->GetTranslation();
-	pos.x -= size_/2;
+	pos.x -= size_ / 2;
 	pos.y -= size_ / 2;
 	pos.z -= size_ / 2;
 
@@ -547,13 +555,11 @@ bool Chunk::UpdateBlocks()
 					collisionBoxes.push_back({
 						glm::vec3(x + pos.x, y + pos.y, z + pos.z),
 						glm::vec3(1.0f, 1.0f, 1.0f)
-					});
+						});
 				}
 			}
 		}
 	}
-
-	return hasUpdatedBlocks;
 }
 
 void Chunk::SetShouldDraw(bool shouldDraw)
@@ -573,17 +579,28 @@ std::vector<CollisionDetection::CollisionBox>& Chunk::GetCollisionBoxes() {
 void Chunk::RemoveBlockAt(glm::vec3 worldPosition)
 {
 	glm::vec3 chunkPosition = worldPosition - transformComponent->GetTranslation();
-	//chunkPosition.x -= size_ / 2;
-	//chunkPosition.y -= size_ / 2;
-	//chunkPosition.z -= size_ / 2;
+
+	chunkPosition.x += size_ / 2;
+	chunkPosition.y += size_ / 2;
+	chunkPosition.z += size_ / 2;
 
 	if ((chunkPosition.x >= 0.0f && chunkPosition.x < size_) &&
 		(chunkPosition.y >= 0.0f && chunkPosition.y < size_) &&
 		(chunkPosition.z >= 0.0f && chunkPosition.z < size_)) {
+
+		blocks_.at(chunkPosition.z).at(chunkPosition.x).at(chunkPosition.y) = BLOCK_TYPE_AIR;
+		Reload();
+
 		printf("Block Position <Inside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
 	}
 	else
 	{
 		printf("Block Position <Outside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
 	}
+}
+
+void Chunk::Reload()
+{
+	UpdateCollisionData();
+	GenerateMesh(true);
 }

@@ -134,6 +134,9 @@ void PlayerController::Update(World* world)
 		velocity_.y = 0.0f;
 	}
 
+	// Offset the Camera
+	cameraTransformComponent_->SetTranslation({ translation.x - 0.4f, currentTranslation.y + 1.0f, translation.z - 0.4f});
+
 	// Check for Mouse changes
 	double mouseXPos, mouseYPos;
 	glfwGetCursorPos(window_, &mouseXPos, &mouseYPos);
@@ -160,7 +163,7 @@ void PlayerController::Update(World* world)
 		hasJustPressBreakBlock = true;
 
 		CollisionDetection::RaycastHit hit{};
-		bool wasHitFound = world->PerformRaycast(hit, cameraTransformComponent_->GetTranslation(), cameraTransformComponent_->GetForwardVector(), 12.0f, 0.1f, 24.0f);
+		bool wasHitFound = world->PerformRaycast(hit, cameraTransformComponent_->GetTranslation(), cameraTransformComponent_->GetForwardVector(), 4.0f, 0.5f, 8.0f);
 
 		if (wasHitFound)
 		{
@@ -183,12 +186,9 @@ void PlayerController::Update(World* world)
 
 CollisionDetection::CollisionBox PlayerController::getCollisionBox() {
 	CollisionDetection::CollisionBox box{};
-	glm::vec3 pos = transformComponent_->GetTranslation();
-	pos.z += 0.4f;
-	pos.y -= 1.4f;
 
-	box.origin = pos;
-	box.size = glm::vec3(0.8f, 1.8f, 0.8f);
+	box.origin = transformComponent_->GetTranslation();
+	box.size = glm::vec3(0.8f, 1.2f, 0.8f);
 
 	return box;
 }
@@ -196,7 +196,7 @@ CollisionDetection::CollisionBox PlayerController::getCollisionBox() {
 bool PlayerController::CanMoveTo(World* world, glm::vec3 newTranslation) {
 
 	CollisionDetection::CollisionBox box = getCollisionBox();
-	float boxOffset = 1.4f;
+	float boxOffset = 1.2f;
 	box.origin = { newTranslation.x, newTranslation.y - boxOffset, newTranslation.z + 0.4f };
 
 	CollisionDetection::CollisionBox hitBox{};
