@@ -81,4 +81,6 @@ public:
 
 	bool IsCollidingWithWorld(CollisionDetection::CollisionBox collisionBox, CollisionDetection::CollisionBox& hitBoxOut);
 	bool PerformRaycast(CollisionDetection::RaycastHit& hitOut, glm::vec3 hitStart, glm::vec3 direction, float distance, float stepColliderSize, int numSteps);
+
+	std::vector<Chunk*>& GetChunks();
 };
