@@ -32,6 +32,7 @@ protected:
 	bool isJumping;
 
 	bool hasJustPressBreakBlock;
+	bool hasJustPressedPlaceBlock;
 public:
 	PlayerController(GLFWwindow* window, glm::vec3 position, glm::vec3 rotation);
 

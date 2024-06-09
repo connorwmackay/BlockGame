@@ -25,6 +25,7 @@ PlayerController::PlayerController(GLFWwindow* window, glm::vec3 position, glm::
 	hasJustPressedJump = false;
 	isJumping = false;
 	hasJustPressBreakBlock = false;
+	hasJustPressedPlaceBlock = false;
 
 	friction_ = 0.95f;
 	velocity_ = glm::vec3(0.0f);
@@ -154,12 +155,17 @@ void PlayerController::Update(World* world)
 	prevMouseXPos_ = mouseXPos;
 	prevMouseYPos_ = mouseYPos;
 
-	if (glfwGetMouseButton(window_, 0) == GLFW_RELEASE)
+	if (glfwGetMouseButton(window_, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)
 	{
 		hasJustPressBreakBlock = false;
 	}
 
-	if (glfwGetMouseButton(window_, 0) == GLFW_PRESS && !hasJustPressBreakBlock) {
+	if (glfwGetMouseButton(window_, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_RELEASE)
+	{
+		hasJustPressedPlaceBlock = false;
+	}
+
+	if (glfwGetMouseButton(window_, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && !hasJustPressBreakBlock) {
 		hasJustPressBreakBlock = true;
 
 		CollisionDetection::RaycastHit hit{};
@@ -175,9 +181,43 @@ void PlayerController::Update(World* world)
 
 			for (Chunk* chunk : chunks) {
 				// Only removes block if it is actually in the chunk
-				chunk->RemoveBlockAt(hit.hit.origin);
+				if (chunk->RemoveBlockAt(hit.hit.origin)) {
+					break;
+				}
 			}
-		} else
+		}
+		else
+		{
+			printf("No Hit\n");
+		}
+	}
+
+	if (glfwGetMouseButton(window_, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && !hasJustPressedPlaceBlock)
+	{
+		hasJustPressedPlaceBlock = true;
+
+		CollisionDetection::RaycastHit hit{};
+		bool wasHitFound = world->PerformRaycast(hit, cameraTransformComponent_->GetTranslation(), cameraTransformComponent_->GetForwardVector(), 4.0f, 0.5f, 8.0f);
+
+		if (wasHitFound)
+		{
+			printf("Hit\n");
+			std::vector<Chunk*> chunks = world->GetChunksInsideArea(hit.hit.origin, hit.hit.size);
+			printf("Num Chunks: %d\n", chunks.size());
+
+			printf("Hit occured at: (%f, %f, %f)\n", hit.hit.origin.x, hit.hit.origin.y, hit.hit.origin.z);
+
+			for (Chunk* chunk : chunks) {
+				// Only places block if the hit is actually in the chunk
+				if (chunk->PlaceBlockNextTo(
+					hit.hit.origin, 
+					cameraTransformComponent_->GetTranslation(), 
+					BLOCK_TYPE_STONE)) {
+					break;
+				}
+			}
+		}
+		else
 		{
 			printf("No Hit\n");
 		}

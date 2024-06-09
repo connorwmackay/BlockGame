@@ -24,6 +24,7 @@
 #define BLOCK_TYPE_FORESTGRASS 6
 #define BLOCK_TYPE_TREEBARK 7
 #define BLOCK_TYPE_TREELEAVES 8
+#define BLOCK_TYPE_NONE 9
 
 class World;
 
@@ -102,5 +103,6 @@ public:
 
 	std::vector<CollisionDetection::CollisionBox>& GetCollisionBoxes();
 
-	void RemoveBlockAt(glm::vec3 worldPosition);
+	bool RemoveBlockAt(glm::vec3 worldPosition);
+	bool PlaceBlockNextTo(glm::vec3 worldPosition, glm::vec3 playerPos, uint8_t blockType);
 };

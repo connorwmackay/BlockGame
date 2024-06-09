@@ -43,7 +43,7 @@ Game::Game()
 
 	window = glfwCreateWindow(1280, 720, "Block Game", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
