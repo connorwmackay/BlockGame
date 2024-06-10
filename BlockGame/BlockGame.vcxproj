@@ -160,6 +160,7 @@
     <ClCompile Include="..\Libraries\stb\stb_image.c" />
     <ClCompile Include="cameraComponent.cpp" />
     <ClCompile Include="chunk.cpp" />
+    <ClCompile Include="collisionBoxComponent.cpp" />
     <ClCompile Include="collisionDetection.cpp" />
     <ClCompile Include="component.cpp" />
     <ClCompile Include="entity.cpp" />
@@ -179,6 +180,7 @@
   <ItemGroup>
     <ClInclude Include="cameraComponent.h" />
     <ClInclude Include="chunk.h" />
+    <ClInclude Include="collisionBoxComponent.h" />
     <ClInclude Include="component.h" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="freeFormController.h" />

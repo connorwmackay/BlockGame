@@ -10,10 +10,15 @@ PlayerController::PlayerController(GLFWwindow* window, glm::vec3 position, glm::
 	AddComponent("transform", new TransformComponent(this, position, rotation, glm::vec3(1.0f, 1.0f, 1.0f)));
 	AddComponent("cameraTransform", new TransformComponent(this, position, rotation, glm::vec3(1.0f, 1.0f, 1.0f)));
 	AddComponent("camera", new CameraComponent(this));
+	AddComponent("collision", new CollisionBoxComponent(this, {
+		position,
+		glm::vec3(0.5f, 1.9f, 0.5f)
+	}));
 
 	cameraComponent_ = static_cast<CameraComponent*>(GetComponentByName("camera"));
 	transformComponent_ = static_cast<TransformComponent*>(GetComponentByName("transform"));
 	cameraTransformComponent_ = static_cast<TransformComponent*>(GetComponentByName("cameraTransform"));
+	collisionBoxComponent_ = static_cast<CollisionBoxComponent*>(GetComponentByName("collision"));
 
 	window_ = window;
 
@@ -91,7 +96,7 @@ void PlayerController::Update(World* world)
 
 	glm::vec3 translation = transformComponent_->GetTranslation();
 	// Check Forward / Back / Left / Right Collision
-	if (CanMoveTo(world, { currentTranslation.x, translation.y, currentTranslation.z})) {
+	if (collisionBoxComponent_->CanMoveTo(world, { currentTranslation.x, translation.y, currentTranslation.z})) {
 		transformComponent_->SetTranslation({ currentTranslation.x, translation.y, currentTranslation.z});
 		cameraTransformComponent_->SetTranslation({ currentTranslation.x, translation.y, currentTranslation.z});
 	}
@@ -127,7 +132,7 @@ void PlayerController::Update(World* world)
 	currentTranslation.y += velocity_.y;
 
 	// Up / Down
-	if (CanMoveTo(world, { translation.x, currentTranslation.y, translation.z})) {
+	if (collisionBoxComponent_->CanMoveTo(world, { translation.x, currentTranslation.y, translation.z})) {
 		transformComponent_->SetTranslation({ translation.x, currentTranslation.y, translation.z});
 		cameraTransformComponent_->SetTranslation({ translation.x, currentTranslation.y, translation.z});
 	}
@@ -136,7 +141,7 @@ void PlayerController::Update(World* world)
 	}
 
 	// Offset the Camera
-	cameraTransformComponent_->SetTranslation({ translation.x - 0.4f, currentTranslation.y + 1.0f, translation.z - 0.4f});
+	cameraTransformComponent_->SetTranslation({ translation.x, currentTranslation.y + 1.8f, translation.z});
 
 	// Check for Mouse changes
 	double mouseXPos, mouseYPos;
@@ -222,25 +227,4 @@ void PlayerController::Update(World* world)
 			printf("No Hit\n");
 		}
 	}
-}
-
-CollisionDetection::CollisionBox PlayerController::getCollisionBox() {
-	CollisionDetection::CollisionBox box{};
-
-	box.origin = transformComponent_->GetTranslation();
-	box.size = glm::vec3(0.8f, 1.2f, 0.8f);
-
-	return box;
-}
-
-bool PlayerController::CanMoveTo(World* world, glm::vec3 newTranslation) {
-
-	CollisionDetection::CollisionBox box = getCollisionBox();
-	float boxOffset = 1.2f;
-	box.origin = { newTranslation.x, newTranslation.y - boxOffset, newTranslation.z + 0.4f };
-
-	CollisionDetection::CollisionBox hitBox{};
-	bool willCollide = world->IsCollidingWithWorld(box, hitBox);
-
-	return !willCollide;
 }
