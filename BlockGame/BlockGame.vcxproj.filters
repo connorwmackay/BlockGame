@@ -96,6 +96,9 @@
     <ClCompile Include="collisionBoxComponent.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="logging.h">
@@ -158,6 +161,9 @@
     <ClInclude Include="collisionBoxComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\Libraries\FastNoise2\bin\FastNoise.dll">
@@ -184,6 +190,12 @@
   <ItemGroup>
     <None Include="collisionDetection.h">
       <Filter>Header Files</Filter>
+    </None>
+    <None Include="Assets\image.vert">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="Assets\image.frag">
+      <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>
 </Project>

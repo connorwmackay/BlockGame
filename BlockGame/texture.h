@@ -31,7 +31,7 @@ public:
 	Texture(TextureData textureData, GLenum textureTarget, GLint textureMinFilter, GLint textureMagFilter);
 	virtual ~Texture() = default;
 
-	static TextureData LoadTextureDataFromFile(const char* file);
+	static TextureData LoadTextureDataFromFile(const char* file, int desiredChannels = 3);
 	static void FreeTextureData(TextureData& textureData);
 	static GLenum GetTextureUnitFromInt(int index);
 
@@ -46,6 +46,8 @@ class Texture2D : public Texture
 {
 public:
 	Texture2D(TextureData textureData, GLenum textureTarget, GLint textureMinFilter, GLint textureMagFilter);
+protected:
+	GLint internalFormat;
 };
 
 class Texture2DArray : public Texture
