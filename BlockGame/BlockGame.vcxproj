@@ -160,12 +160,14 @@
     <ClCompile Include="..\Libraries\stb\stb_image.c" />
     <ClCompile Include="cameraComponent.cpp" />
     <ClCompile Include="chunk.cpp" />
+    <ClCompile Include="collisionBoxComponent.cpp" />
     <ClCompile Include="collisionDetection.cpp" />
     <ClCompile Include="component.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="freeFormController.cpp" />
     <ClCompile Include="frustum.cpp" />
     <ClCompile Include="game.cpp" />
+    <ClCompile Include="image.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
     <ClCompile Include="meshComponent.cpp" />
@@ -179,11 +181,13 @@
   <ItemGroup>
     <ClInclude Include="cameraComponent.h" />
     <ClInclude Include="chunk.h" />
+    <ClInclude Include="collisionBoxComponent.h" />
     <ClInclude Include="component.h" />
     <ClInclude Include="entity.h" />
     <ClInclude Include="freeFormController.h" />
     <ClInclude Include="frustum.h" />
     <ClInclude Include="game.h" />
+    <ClInclude Include="image.h" />
     <ClInclude Include="light.h" />
     <ClInclude Include="logging.h" />
     <ClInclude Include="mesh.h" />
@@ -226,6 +230,8 @@
     </CopyFileToFolders>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\image.frag" />
+    <None Include="Assets\image.vert" />
     <None Include="collisionDetection.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

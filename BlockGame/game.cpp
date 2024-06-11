@@ -11,6 +11,7 @@
 #include "chunk.h"
 #include "entity.h"
 #include "freeFormController.h"
+#include "image.h"
 #include "meshComponent.h"
 #include "transformComponent.h"
 #include "world.h"
@@ -43,7 +44,7 @@ Game::Game()
 
 	window = glfwCreateWindow(1280, 720, "Block Game", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
-	glfwSwapInterval(1);
+	glfwSwapInterval(0);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -73,6 +74,9 @@ Game::Game()
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(GL_TRUE);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void Game::Run()
@@ -139,6 +143,9 @@ void Game::Run()
 
 	double startPhysicsUpdateTime = glfwGetTime();
 	double targetPhysicsUpdateTime = 1.0f / 60;
+
+	Image crosshairImage = Image("./Assets/crosshair.png");
+
 	while (!glfwWindowShouldClose(window))
 	{
 		debugInfo.StartFrame();
@@ -220,6 +227,10 @@ void Game::Run()
 			chunk->Draw();
 		}
 		Mesh::EndDrawBatch();
+
+		glm::mat4 orthoProjection = glm::mat4(1.0f);
+		orthoProjection = glm::ortho(0.0f, (float)width, (float)height, 0.0f , 0.1f, 100.0f);
+		crosshairImage.Draw(orthoProjection, glm::vec2(width/2-32, height/2-32), glm::vec2(0.0f), glm::vec2(64.0f));
 
 		// Display Game
 		ImGui::Render();

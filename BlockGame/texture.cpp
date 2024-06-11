@@ -10,6 +10,8 @@ Texture::Texture(TextureData textureData, GLenum textureTarget, GLint textureMin
 	{
 		LOG("Couldn't create OpenGL texture\n");
 	}
+
+	// TODO: Set Internal Format Enum
 }
 
 void Texture::Bind(GLenum textureUnit)
@@ -24,11 +26,11 @@ void Texture::Unbind(GLenum textureUnit)
 	glBindTexture(textureTarget_, 0);
 }
 
-TextureData Texture::LoadTextureDataFromFile(const char* file)
+TextureData Texture::LoadTextureDataFromFile(const char* file, int desiredChannels)
 {
 	TextureData textureData{};
 
-	textureData.data = stbi_load(file, &textureData.width, &textureData.height, &textureData.numChannels, 3);
+	textureData.data = stbi_load(file, &textureData.width, &textureData.height, &textureData.numChannels, desiredChannels);
 
 	if (!textureData.data)
 	{
@@ -75,7 +77,21 @@ Texture2D::Texture2D(TextureData textureData, GLenum textureTarget, GLint textur
 	glTexParameteri(textureTarget_, GL_TEXTURE_MIN_FILTER, textureMinFilter);
 	glTexParameteri(textureTarget_, GL_TEXTURE_MAG_FILTER, textureMagFilter);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, textureData.width, textureData.height, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData.data);
+	if (textureData.numChannels == 3)
+	{
+		internalFormat = GL_RGB;
+	}
+	else if (textureData.numChannels == 4)
+	{
+		internalFormat = GL_RGBA;
+	}
+	else
+	{
+		printf("Error: %d Channels Have No Valid Internal Texture Format\n", textureData.numChannels);
+		return;
+	}
+
+	glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, textureData.width, textureData.height, 0, internalFormat, GL_UNSIGNED_BYTE, textureData.data);
 	glGenerateMipmap(textureTarget_);
 }
 

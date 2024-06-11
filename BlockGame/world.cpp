@@ -503,3 +503,8 @@ bool World::PerformRaycast(CollisionDetection::RaycastHit& hitOut, glm::vec3 hit
 
 	return false;
 }
+
+std::vector<Chunk*>& World::GetChunks()
+{
+	return chunks_;
+}

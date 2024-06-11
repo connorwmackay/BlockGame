@@ -3,6 +3,7 @@
 #include <glm/vec3.hpp>
 
 #include "cameraComponent.h"
+#include "collisionBoxComponent.h"
 #include "entity.h"
 #include "transformComponent.h"
 #include "collisionDetection.h"
@@ -13,6 +14,7 @@ class PlayerController : public Entity
 {
 protected:
 	TransformComponent* transformComponent_;
+	CollisionBoxComponent* collisionBoxComponent_;
 	TransformComponent* cameraTransformComponent_;
 	CameraComponent* cameraComponent_;
 	GLFWwindow* window_;
@@ -32,6 +34,7 @@ protected:
 	bool isJumping;
 
 	bool hasJustPressBreakBlock;
+	bool hasJustPressedPlaceBlock;
 public:
 	PlayerController(GLFWwindow* window, glm::vec3 position, glm::vec3 rotation);
 
@@ -39,6 +42,4 @@ public:
 	void Update(World* world);
 
 	CollisionDetection::CollisionBox getCollisionBox();
-private:
-	bool CanMoveTo(World* world, glm::vec3 newTranslation);
 };
