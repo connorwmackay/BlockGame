@@ -6,8 +6,6 @@
 #include <unordered_map>
 #include <GLFW/glfw3.h>
 
-#include <noiseutils.h>
-
 World::World(glm::vec3 currentPlayerPos, int renderDistance)
 {
 	srand(time(NULL));
@@ -17,31 +15,7 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 	TreeTrunkPositions = std::vector<glm::vec3>();
 	TreeLeavePositions = std::vector<glm::vec3>();
 
-	// Setup the noise for terrain generation
-	baseMountainTerrainModule_.SetSeed(seed_);
-	baseMountainTerrainModule_.SetOctaveCount(3);
-	baseMountainTerrainModule_.SetFrequency(0.01f);
-	baseMountainTerrainModule_.SetLacunarity(1);
-
-	mountainTerrainModule_.SetSourceModule(0, baseMountainTerrainModule_);
-	mountainTerrainModule_.SetScale(0.3f);
-	mountainTerrainModule_.SetBias(-0.5f);
-
-	baseHillyTerrainModule_.SetSeed(seed_);
-	baseHillyTerrainModule_.SetOctaveCount(3);
-	baseHillyTerrainModule_.SetFrequency(0.01f);
-
-	hillyTerrainModule_.SetSourceModule(0, baseHillyTerrainModule_);
-	hillyTerrainModule_.SetScale(0.4f);
-	hillyTerrainModule_.SetBias(-0.70f);
-
-	baseFlatTerrainModule_.SetSeed(seed_);
-	baseFlatTerrainModule_.SetOctaveCount(2);
-	baseFlatTerrainModule_.SetFrequency(0.01f);
-
-	flatTerrainModule_.SetSourceModule(0, baseFlatTerrainModule_);
-	flatTerrainModule_.SetScale(0.25f);
-	flatTerrainModule_.SetBias(-0.75f);
+    terrain_ = Terrain(seed_);
 
 	auto temperatureNoiseSimplex = FastNoise::New<FastNoise::Simplex>();
 	temperatureNoise_ = FastNoise::New<FastNoise::FractalFBm>();
@@ -49,22 +23,6 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 	temperatureNoise_->SetOctaveCount(1);
 	temperatureNoise_->SetLacunarity(2);
 	temperatureNoise_->SetGain(1.0f);
-
-	terrainTypeModule_.SetSeed(seed_);
-	terrainTypeModule_.SetFrequency(0.005f);
-	terrainTypeModule_.SetPersistence(0.4f);
-	terrainTypeModule_.SetOctaveCount(4);
-
-	terrainSelectorModule_.SetSourceModule(0, flatTerrainModule_);
-	terrainSelectorModule_.SetSourceModule(1, mountainTerrainModule_);
-	terrainSelectorModule_.SetSourceModule(2, hillyTerrainModule_);
-	terrainSelectorModule_.SetControlModule(terrainTypeModule_);
-	terrainSelectorModule_.SetBounds(0.0f, 1000.0f);
-	terrainSelectorModule_.SetEdgeFalloff(0.1f);
-
-	terrainTurbulenceModule_.SetSourceModule(0, terrainSelectorModule_);
-	terrainTurbulenceModule_.SetFrequency(0.03f);
-	terrainTurbulenceModule_.SetPower(0.2f);
 
 	worldWorker_ = new WorldWorker(1);
 
@@ -294,29 +252,7 @@ bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::
 
 std::vector<float> World::GetNoiseForChunkSection(int x, int z, int size)
 {
-	auto terrainNoiseOutput = std::vector<float>();
-
-	utils::NoiseMap chunkHeightMap;
-	utils::NoiseMapBuilderPlane chunkHeightMapBuilderPlane;
-	chunkHeightMapBuilderPlane.SetSourceModule(terrainTurbulenceModule_);
-	chunkHeightMapBuilderPlane.SetDestSize(size, size);
-	chunkHeightMapBuilderPlane.SetDestNoiseMap(chunkHeightMap);
-	chunkHeightMapBuilderPlane.SetBounds(x, (x + size)-1, z, (z + size)-1);
-	chunkHeightMapBuilderPlane.Build();
-
-	chunkHeightMap.SetBorderValue(0.0f);
-
-	for (int cz = 0; cz < size; cz++)
-	{
-		for (int cx=0; cx < size; cx++)
-		{
-			float noiseValue = chunkHeightMap.GetValue(cx, cz);
-			terrainNoiseOutput.push_back(glm::clamp(noiseValue, -1.0f, 1.0f));
-		}
-	}
-
-	chunkHeightMap.ReclaimMem();
-	return terrainNoiseOutput;
+	return terrain_.GetNoiseForChunk(x, z);;
 }
 
 Biome World::GetBiomeFromTemperature(float temperature)

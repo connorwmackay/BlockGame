@@ -183,7 +183,7 @@ void PlayerController::Update(World* world)
 		{
             LOG("Hit\n");
 			std::vector<Chunk*> chunks = world->GetChunksInsideArea(hit.hit.origin, hit.hit.size);
-            LOG("Num Chunks: %d\n", chunks.size());
+            LOG("Num Chunks: %d\n", (int)chunks.size());
 
             LOG("Hit occured at: (%f, %f, %f)\n", hit.hit.origin.x, hit.hit.origin.y, hit.hit.origin.z);
 

@@ -6,9 +6,6 @@
 #include "meshComponent.h"
 #include "transformComponent.h"
 
-#include <noise/noise.h>
-#include "noiseutils.h"
-
 #include "world.h"
 
 Chunk::Chunk(World* world, Biome biome, Texture2DArray texture, std::vector<float> chunkSectionNoise, int minY, int maxY, glm::vec3 startingPosition, int size, int seed)

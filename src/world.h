@@ -1,15 +1,14 @@
 #pragma once
 #include <future>
-#include <noiseutils.h>
 #include <glm/vec3.hpp>
+#include <FastNoise/FastNoise.h>
 
 #include "chunk.h"
 #include "entity.h"
 #include "worker.h"
 
-#include <noise/noise.h>
-
 #include "frustum.h"
+#include "terrain.h"
 
 struct ChunkNoiseSection
 {
@@ -22,26 +21,7 @@ class World
 	glm::vec3 lastKnownPlayerPos_;
 	std::vector<Chunk*> chunks_;
 
-	// Mountainous Terrain
-	noise::module::RidgedMulti baseMountainTerrainModule_;
-	noise::module::ScaleBias mountainTerrainModule_;
-
-	// Hilly Terrain
-	noise::module::Perlin baseHillyTerrainModule_;
-	noise::module::ScaleBias hillyTerrainModule_;
-
-	// Flat Terrain
-	noise::module::Perlin baseFlatTerrainModule_;
-	noise::module::ScaleBias flatTerrainModule_;
-
-	// Terrain Type
-	noise::module::Perlin terrainTypeModule_;
-
-	// Terrain Selector
-	noise::module::Select terrainSelectorModule_;
-
-	// Final Terrain
-	noise::module::Turbulence terrainTurbulenceModule_;
+    Terrain terrain_;
 
 	FastNoise::SmartNode<FastNoise::FractalFBm> temperatureNoise_;
 
