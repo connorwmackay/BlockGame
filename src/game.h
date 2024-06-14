@@ -55,8 +55,11 @@ struct DebugInfo
 struct Game
 {
 	GLFWwindow* window;
-	
 	DebugInfo debugInfo;
+    bool hasJustPressedFullscreen;
+    bool isFullscreen;
+
+    void ToggleFullscreen();
 
 	Game();
 	void Run();

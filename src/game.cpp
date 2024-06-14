@@ -36,6 +36,8 @@ MessageCallback(GLenum source,
 
 Game::Game()
 {
+    isFullscreen = false;
+
 	if (glfwInit() != GLFW_TRUE)
 	{
 		LOG("Couldn't initialise GLFW\n");
@@ -156,6 +158,7 @@ void Game::Run()
 
 	Image crosshairImage = Image("./Assets/crosshair.png");
 
+    hasJustPressedFullscreen = false;
 	while (!glfwWindowShouldClose(window))
 	{
 		debugInfo.StartFrame();
@@ -198,10 +201,14 @@ void Game::Run()
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 		}
 
-		if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS)
-		{
-			shouldShowDebugInfo = !shouldShowDebugInfo;
-		}
+        if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_RELEASE) {
+            hasJustPressedFullscreen = false;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_F11) == GLFW_PRESS && !hasJustPressedFullscreen) {
+            ToggleFullscreen();
+            hasJustPressedFullscreen = true;
+        }
 
 		CameraComponent* cameraComponent = static_cast<CameraComponent*>(playerController.GetComponentByName("camera"));
 		TransformComponent* transformComponent = static_cast<TransformComponent*>(playerController.GetComponentByName("transform"));
@@ -429,4 +436,16 @@ void DebugInfo::Display(const glm::vec3& playerPos, World* world)
 	chunksCulled << world->NumChunksCulled();
 	ImGui::Text(chunksCulled.str().c_str());
 #endif
+}
+
+void Game::ToggleFullscreen() {
+    if (!isFullscreen) {
+        const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        glfwSetWindowMonitor(window, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
+        isFullscreen = true;
+    } else {
+        const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        glfwSetWindowMonitor(window, nullptr, mode->width/2-(1280/2), mode->height/2-(720/2), 1280, 720, mode->refreshRate);
+        isFullscreen = false;
+    }
 }
