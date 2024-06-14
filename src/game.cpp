@@ -287,7 +287,6 @@ DebugInfo::DebugInfo()
 	fpsMax = 0.0f;
 	fpsAverage = 0.0f;
 	fpsMin = 0.0f;
-	swapInterval = 1;
 	glMajorVersion = -1;
 	glMinorVersion = -1;
 	averageFrameTime = 0.0f;
@@ -410,19 +409,8 @@ void DebugInfo::Display(const glm::vec3& playerPos, World* world)
 	fpsData << "\nFPS Avg.: " << fpsAverage;
 	fpsData << "\nFPS Min: " << fpsMin;
 
-	std::stringstream vsync;
-	if (swapInterval == 0)
-	{
-		vsync << "VSync: Off";
-	}
-	else
-	{
-		vsync << "VSync: On";
-	}
-
 	ImGui::Text(glVersion.str().c_str());
 	ImGui::Text(fpsData.str().c_str());
-	ImGui::Text(vsync.str().c_str());
 
 	ImGui::SeparatorText("Game Data:");
 
