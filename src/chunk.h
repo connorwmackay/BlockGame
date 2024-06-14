@@ -103,6 +103,11 @@ public:
 
 	std::vector<CollisionDetection::CollisionBox>& GetCollisionBoxes();
 
+    glm::vec3 findNearestBlockPosition(const glm::vec3& worldLocation, bool shouldIgnoreAir, bool shouldIgnoreSolid);
+
+    glm::vec3 getLocalPosition(const glm::vec3& worldPosition);
+    glm::vec3 getWorldPosition(const glm::vec3& localPosition);
+
 	bool RemoveBlockAt(glm::vec3 worldPosition);
-	bool PlaceBlockNextTo(glm::vec3 worldPosition, glm::vec3 playerPos, uint8_t blockType);
+	bool PlaceBlockAt(glm::vec3 localPosition, uint8_t blockType);
 };

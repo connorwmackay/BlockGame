@@ -602,143 +602,62 @@ bool Chunk::RemoveBlockAt(glm::vec3 worldPosition)
 	return false;
 }
 
-bool Chunk::PlaceBlockNextTo(glm::vec3 worldPosition, glm::vec3 playerPos, uint8_t blockType)
-{
+bool Chunk::PlaceBlockAt(glm::vec3 localPosition, uint8_t blockType) {
+    if ((localPosition.x >= 0.0f && localPosition.x < size_) &&
+        (localPosition.y >= 0.0f && localPosition.y < size_) &&
+        (localPosition.z >= 0.0f && localPosition.z < size_)) {
+        blocks_.at(localPosition.z).at(localPosition.x).at(localPosition.y) = blockType;
+        Reload();
+        return true;
+    }
 
-	glm::vec3 chunkPosition = worldPosition - transformComponent->GetTranslation();
+    return false;
+}
 
-	chunkPosition.x += size_ / 2;
-	chunkPosition.y += size_ / 2;
-	chunkPosition.z += size_ / 2;
+glm::vec3 Chunk::getLocalPosition(const glm::vec3& worldPosition) {
+    glm::vec3 localPosition = worldPosition - transformComponent->GetTranslation();
+    localPosition.x += size_ / 2;
+    localPosition.y += size_ / 2;
+    localPosition.z += size_ / 2;
+    return localPosition;
+}
 
-	if ((chunkPosition.x >= 0.0f && chunkPosition.x < size_) &&
-		(chunkPosition.y >= 0.0f && chunkPosition.y < size_) &&
-		(chunkPosition.z >= 0.0f && chunkPosition.z < size_)) {
+glm::vec3 Chunk::getWorldPosition(const glm::vec3& localPosition) {
+    glm::vec3 worldPosition = localPosition + transformComponent->GetTranslation();
+    worldPosition.x -= size_ / 2;
+    worldPosition.y -= size_ / 2;
+    worldPosition.z -= size_ / 2;
+    return worldPosition;
+}
 
-		// Block That Was Hit
-		uint8_t hitBlock = blocks_.at(chunkPosition.z).at(chunkPosition.x).at(chunkPosition.y);
+glm::vec3 Chunk::findNearestBlockPosition(const glm::vec3& worldLocation, bool shouldIgnoreAir, bool shouldIgnoreSolid) {
+    glm::vec3 localChunkBlockPosition = glm::vec3(0, 0, 0);
+    float minimumDistance = glm::distance(getWorldPosition(localChunkBlockPosition), worldLocation);
 
-		glm::vec3 nearestAirBlockPosition;
-		float minDistance = 1000.0f;
+    for (int z = 0; z < size_.load(); z++)
+    {
+        for (int x = 0; x < size_.load(); x++) {
+            for (int y = 0; y < size_.load(); y++) {
+                uint8_t curBlock = blocks_.at(z).at(x).at(y);
 
-		// Check Adjacent Blocks If Required
-		if ((chunkPosition.z - 1.0f) >= 0.0f)
-		{
-			uint8_t adjacentBlock = blocks_.at(chunkPosition.z - 1.0f).at(chunkPosition.x).at(chunkPosition.y);
-			if (adjacentBlock == BLOCK_TYPE_AIR)
-			{
-				glm::vec3 worldPos = glm::vec3(worldPosition.x, worldPosition.y, worldPosition.z - 1.0f);
-				glm::vec3 pos = glm::vec3(chunkPosition.x, chunkPosition.y, chunkPosition.z - 1.0f);
-				float curDistance = glm::distance(playerPos, worldPos);
+                if (shouldIgnoreAir && curBlock == BLOCK_TYPE_AIR) {
+                    continue;
+                }
+                else if (shouldIgnoreSolid && curBlock != BLOCK_TYPE_AIR) {
+                    continue;
+                }
+                else {
+                    float curMinDistance = glm::distance(getWorldPosition(glm::vec3(x, y, z)), worldLocation);
+                    if (curMinDistance < minimumDistance) {
+                        minimumDistance = curMinDistance;
+                        localChunkBlockPosition = glm::vec3(x, y, z);
+                    }
+                }
+            }
+        }
+    }
 
-				if (curDistance < minDistance)
-				{
-					minDistance = curDistance;
-					nearestAirBlockPosition = pos;
-				}
-			}
-		}
-
-		if ((chunkPosition.z + 1.0f) < size_)
-		{
-			uint8_t adjacentBlock = blocks_.at(chunkPosition.z + 1.0f).at(chunkPosition.x).at(chunkPosition.y);
-			if (adjacentBlock == BLOCK_TYPE_AIR)
-			{
-				glm::vec3 worldPos = glm::vec3(worldPosition.x, worldPosition.y, worldPosition.z + 1.0f);
-				glm::vec3 pos = glm::vec3(chunkPosition.x, chunkPosition.y, chunkPosition.z + 1.0f);
-				float curDistance = glm::distance(playerPos, worldPos);
-
-				if (curDistance < minDistance)
-				{
-					minDistance = curDistance;
-					nearestAirBlockPosition = pos;
-				}
-			}
-		}
-
-		if ((chunkPosition.x - 1.0f) >= 0.0f)
-		{
-			uint8_t adjacentBlock = blocks_.at(chunkPosition.z).at(chunkPosition.x - 1.0f).at(chunkPosition.y);
-			if (adjacentBlock == BLOCK_TYPE_AIR)
-			{
-				glm::vec3 worldPos = glm::vec3(worldPosition.x - 1.0f, worldPosition.y, worldPosition.z);
-				glm::vec3 pos = glm::vec3(chunkPosition.x - 1.0f, chunkPosition.y, chunkPosition.z);
-				float curDistance = glm::distance(playerPos, worldPos);
-
-				if (curDistance < minDistance)
-				{
-					minDistance = curDistance;
-					nearestAirBlockPosition = pos;
-				}
-			}
-		}
-
-		if ((chunkPosition.x + 1.0f) < size_)
-		{
-			uint8_t adjacentBlock = blocks_.at(chunkPosition.z).at(chunkPosition.x + 1.0f).at(chunkPosition.y);
-			if (adjacentBlock == BLOCK_TYPE_AIR)
-			{
-				glm::vec3 worldPos = glm::vec3(worldPosition.x + 1.0f, worldPosition.y, worldPosition.z);
-				glm::vec3 pos = glm::vec3(chunkPosition.x + 1.0f, chunkPosition.y, chunkPosition.z);
-				float curDistance = glm::distance(playerPos, worldPos);
-
-				if (curDistance < minDistance)
-				{
-					minDistance = curDistance;
-					nearestAirBlockPosition = pos;
-				}
-			}
-		}
-
-		if ((chunkPosition.y - 1.0f) >= 0.0f)
-		{
-			uint8_t adjacentBlock = blocks_.at(chunkPosition.z).at(chunkPosition.x).at(chunkPosition.y - 1.0f);
-			if (adjacentBlock == BLOCK_TYPE_AIR)
-			{
-				glm::vec3 worldPos = glm::vec3(worldPosition.x, worldPosition.y - 1.0f, worldPosition.z);
-				glm::vec3 pos = glm::vec3(chunkPosition.x, chunkPosition.y - 1.0f, chunkPosition.z);
-				float curDistance = glm::distance(playerPos, worldPos);
-
-				if (curDistance < minDistance)
-				{
-					minDistance = curDistance;
-					nearestAirBlockPosition = pos;
-				}
-			}
-		}
-
-		if ((chunkPosition.y + 1.0f) < size_)
-		{
-			uint8_t adjacentBlock = blocks_.at(chunkPosition.z).at(chunkPosition.x).at(chunkPosition.y + 1.0f);
-			if (adjacentBlock == BLOCK_TYPE_AIR)
-			{
-				glm::vec3 worldPos = glm::vec3(worldPosition.x, worldPosition.y + 1.0f, worldPosition.z);
-				glm::vec3 pos = glm::vec3(chunkPosition.x, chunkPosition.y + 1.0f, chunkPosition.z);
-				float curDistance = glm::distance(playerPos, worldPos);
-
-				if (curDistance < minDistance)
-				{
-					minDistance = curDistance;
-					nearestAirBlockPosition = pos;
-				}
-			}
-		}
-
-		if (minDistance < 1000.0f)
-		{
-			blocks_.at(nearestAirBlockPosition.z).at(nearestAirBlockPosition.x).at(nearestAirBlockPosition.y) = blockType;
-			Reload();
-			return true;
-		}
-
-        LOG("Block Position <Inside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
-	}
-	else
-	{
-        LOG("Block Position <Outside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
-	}
-
-	return false;
+    return localChunkBlockPosition;
 }
 
 void Chunk::Reload()

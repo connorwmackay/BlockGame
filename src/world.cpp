@@ -508,3 +508,27 @@ std::vector<Chunk*>& World::GetChunks()
 {
 	return chunks_;
 }
+
+void World::PlaceBlock(glm::vec3 worldLocation, uint8_t blockType) {
+    std::vector<Chunk*> chunks = GetChunksInsideArea(worldLocation, glm::vec3(1.0f, 1.0f, 1.0f));
+
+    if (chunks.empty())
+        return;
+
+    Chunk* nearestChunk = chunks[0];
+    glm::vec3 localBlockPos = chunks[0]->findNearestBlockPosition(worldLocation, false, true);
+    float minDistance = glm::distance(worldLocation, chunks[0]->getWorldPosition(localBlockPos));
+
+    for (Chunk* chunk : chunks) {
+        glm::vec3 nearestBlockPos = chunk->findNearestBlockPosition(worldLocation, false, true);
+        float curDistance = glm::distance(worldLocation, chunk->getWorldPosition(nearestBlockPos));
+
+        if (curDistance < minDistance) {
+            minDistance = curDistance;
+            localBlockPos = nearestBlockPos;
+            nearestChunk = chunk;
+        }
+    }
+
+    nearestChunk->PlaceBlockAt(localBlockPos, blockType);
+}
