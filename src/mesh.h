@@ -2,7 +2,7 @@
 #include <atomic>
 #include <unordered_map>
 #include <vector>
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <glm/fwd.hpp>
 
 #include "meshTypes.h"

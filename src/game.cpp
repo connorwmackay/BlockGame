@@ -42,13 +42,21 @@ Game::Game()
 		return;
 	}
 
+    // V-Sync (1 / On) or (0 / Off)
+    debugInfo.swapInterval = 0;
+
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	window = glfwCreateWindow(1280, 720, "Block Game", nullptr, nullptr);
 	glfwMakeContextCurrent(window);
-	glfwSwapInterval(0);
+	glfwSwapInterval(debugInfo.swapInterval);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    int version = gladLoadGL(glfwGetProcAddress);
+	if (!version)
 	{
 		LOG("Couldn't load GLAD\n");
 		return;
@@ -57,6 +65,7 @@ Game::Game()
 	glViewport(0, 0, 1280, 720);
 	glfwSetFramebufferSizeCallback(window, ResizeViewportCallback);
 
+#ifdef _DEBUG
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -65,6 +74,7 @@ Game::Game()
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	const char* glsl_version = "#version 330";
 	ImGui_ImplOpenGL3_Init(glsl_version);
+#endif
 
 	// OpenGL Settings
 #ifdef _DEBUG
@@ -160,7 +170,8 @@ void Game::Run()
 		}
 
 		// Update Game
-		ImGui_ImplOpenGL3_NewFrame();
+#ifdef _DEBUG
+        ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
@@ -168,6 +179,7 @@ void Game::Run()
 		ImGui::Begin("Debug Information", 0, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove);
 		debugInfo.Display(playerTransform->GetTranslation(), &world);
 		ImGui::End();
+#endif
 
 		world.Update(playerTransform->GetTranslation());
 
@@ -233,8 +245,10 @@ void Game::Run()
 		crosshairImage.Draw(orthoProjection, glm::vec2(width/2-32, height/2-32), glm::vec2(0.0f), glm::vec2(64.0f));
 
 		// Display Game
-		ImGui::Render();
+#ifdef _DEBUG
+        ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+#endif
 
 		glfwSwapBuffers(window);
 
@@ -247,9 +261,11 @@ void Game::Run()
 
 Game::~Game()
 {
+#ifdef _DEBUG
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
+#endif
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
@@ -279,28 +295,37 @@ DebugInfo::DebugInfo()
 
 void DebugInfo::StartRender()
 {
+#ifdef _DEBUG
 	startRenderFrameTime = glfwGetTime();
+#endif
 }
 
 void DebugInfo::EndRender()
 {
+#ifdef _DEBUG
 	endRenderFrameTime = glfwGetTime();
 	renderFrameTimes.push_back(endRenderFrameTime - startRenderFrameTime);
+#endif
 }
 
 void DebugInfo::StartUpdate()
 {
+#ifdef _DEBUG
 	startUpdateFrameTime = glfwGetTime();
+#endif
 }
 
 void DebugInfo::EndUpdate()
 {
+#ifdef _DEBUG
 	endUpdateFrameTime = glfwGetTime();
 	updateFrameTimes.push_back(endUpdateFrameTime - startUpdateFrameTime);
+#endif
 }
 
 void DebugInfo::StartFrame()
 {
+#ifdef _DEBUG
 	if (glMajorVersion == -1 || glMinorVersion == -1)
 	{
 		glGetIntegerv(GL_MAJOR_VERSION, &glMajorVersion);
@@ -308,10 +333,12 @@ void DebugInfo::StartFrame()
 	}
 
 	startFrameTime = glfwGetTime();
+#endif
 }
 
 void DebugInfo::EndFrame()
 {
+#ifdef _DEBUG
 	endFrameTime = glfwGetTime();
 	double timeDifference = endFrameTime - startFrameTime;
 	frameTimes.push_back(endFrameTime - startFrameTime);
@@ -365,10 +392,12 @@ void DebugInfo::EndFrame()
 		renderFrameTimes.clear();
 		updateFrameTimes.clear();
 	}
+#endif
 }
 
 void DebugInfo::Display(const glm::vec3& playerPos, World* world)
 {
+#ifdef _DEBUG
 	ImGui::SeparatorText("Graphics:");
 	std::stringstream glVersion;
 	glVersion << "OpenGL Version: " << glMajorVersion << "." << glMinorVersion;
@@ -411,4 +440,5 @@ void DebugInfo::Display(const glm::vec3& playerPos, World* world)
 	chunksCulled << "No. Chunks Frustum Culled: ";
 	chunksCulled << world->NumChunksCulled();
 	ImGui::Text(chunksCulled.str().c_str());
+#endif
 }

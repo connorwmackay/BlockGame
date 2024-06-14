@@ -591,12 +591,12 @@ bool Chunk::RemoveBlockAt(glm::vec3 worldPosition)
 		blocks_.at(chunkPosition.z).at(chunkPosition.x).at(chunkPosition.y) = BLOCK_TYPE_AIR;
 		Reload();
 
-		printf("Block Position <Inside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
+        LOG("Block Position <Inside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
 		return true;
 	}
 	else
 	{
-		printf("Block Position <Outside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
+        LOG("Block Position <Outside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
 	}
 
 	return false;
@@ -731,11 +731,11 @@ bool Chunk::PlaceBlockNextTo(glm::vec3 worldPosition, glm::vec3 playerPos, uint8
 			return true;
 		}
 
-		printf("Block Position <Inside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
+        LOG("Block Position <Inside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
 	}
 	else
 	{
-		printf("Block Position <Outside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
+        LOG("Block Position <Outside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
 	}
 
 	return false;

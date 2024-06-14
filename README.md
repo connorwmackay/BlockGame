@@ -1,16 +1,9 @@
 # BlockGame
 This is my attempt at making a Minecraft clone using OpenGL and C++. My previous project RemEngine featured infinitely generated  terrain, however it used noise incorrectly and used instancing instead of meshing. This engine uses meshing, where all the visible faces of blocks in a chunk are combined into one mesh and then that mesh is drawn.
 
-As this is still in active development, expect the performance to be sub-optimal, I still have a lot of performance improvements to make. Notably, since I used std::vector a lot the debug build performance is much slower than when the game is built on release mode, so loading chunks may appear slow but would actually be much faster for a proper build.
-
-You see a board of planned features here: https://trello.com/b/FBFUMqoR/blockgame
-
-Switched to now use libnoise, you will need to re-download the dependencies.
-
 ![Screenshot of the game running on Windows](screenshot.png)
 
 # Current Features
-
 - Infinite terrain (on x and z axis). You can set minimum and maximum y values for terrain to render. For example a minimum y of 0 and maximum y of 3 would result in 3 chunks being used for the height in terrain generation.
 - Grassland, Desert, Snow and Forest biomes chosen based on a noise value per chunk that acts as the temperature of the chunk (low temperature creates a snow biome chunk, medium creates grassland, high creates desert). This will be expanded to be more intelligent i.e. take into account other noise-generated paramaters.
 - Basic Entity-Component System (Entities have a list of components that store a reference to their owner allowing interaction between components)
@@ -18,22 +11,13 @@ Switched to now use libnoise, you will need to re-download the dependencies.
 - Seamless terrain with a mix of hills/mountains and flatland.
 - ImGui is integrated
 - Directional light (no shadows)
+- Player Controller with Collision
 
-# How to Use This Project
-This project uses Visual Studio 2022 and has only been tested on Windows. If you get an error when building in Release mode, try updating to the latest version of Visual Studio 2022. I use a 64-bit compiled version of libnoise and it was compiled in VS2022. I plan of switching to FastNoise fully at some point if it supports everything libnoise does since libnoise uses a lot of memory and is much less performant.
-
-1. Download the dependencies for this project here: https://drive.google.com/drive/folders/1eDN8yw8NPw_SzJ8jSpk-5UMj-r6m_XMQ?usp=sharing<br>
-
-2. Copy the dependencies folder into the folder with the Visual Studio Solution. The copied
-folder should be named "Libraries" and it should contain several folders.
-
-3. If they aren't already added as an existing file, add:
-    - imgui.cpp
-    - imgui_draw.cpp
-    - imgui_impl_glfw.cpp, imgui_impl_opengl3.cpp
-    - imgui_tables.cpp
-    - imgui_widgets.cpp
-    - stb_image.c
-    - glad.c
-
-4. You should now be able to build and run the project
+# Building
+This project uses CMake with FetchContent to fetch the required dependencies. However, several dependencies still need 
+to be manually put into a `Libraries` folder. You can download them [here](https://drive.google.com/drive/folders/1eDN8yw8NPw_SzJ8jSpk-5UMj-r6m_XMQ?usp=sharing).
+<br>
+Additionally, you will need to copy the `Assets` folder into the same folder as the executable that gets built. Also, 
+the libnoise library dependency was built for VS2022, so if you want to use something else or a different platform you 
+will need to build libnoise yourself and alter the CMakeLists.txt file. I plan on switching fully to FastNoise 2 so this 
+won't be a problem in the future.

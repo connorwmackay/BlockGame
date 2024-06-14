@@ -4,6 +4,7 @@
 #include "transformComponent.h"
 
 #include "world.h"
+#include "logging.h"
 
 PlayerController::PlayerController(GLFWwindow* window, glm::vec3 position, glm::vec3 rotation)
 {
@@ -34,6 +35,8 @@ PlayerController::PlayerController(GLFWwindow* window, glm::vec3 position, glm::
 
 	friction_ = 0.95f;
 	velocity_ = glm::vec3(0.0f);
+
+    glfwGetCursorPos(window_, &prevMouseXPos_, &prevMouseYPos_);
 }
 
 void PlayerController::Start()
@@ -178,11 +181,11 @@ void PlayerController::Update(World* world)
 
 		if (wasHitFound)
 		{
-			printf("Hit\n");
+            LOG("Hit\n");
 			std::vector<Chunk*> chunks = world->GetChunksInsideArea(hit.hit.origin, hit.hit.size);
-			printf("Num Chunks: %d\n", chunks.size());
+            LOG("Num Chunks: %d\n", chunks.size());
 
-			printf("Hit occured at: (%f, %f, %f)\n", hit.hit.origin.x, hit.hit.origin.y, hit.hit.origin.z);
+            LOG("Hit occured at: (%f, %f, %f)\n", hit.hit.origin.x, hit.hit.origin.y, hit.hit.origin.z);
 
 			for (Chunk* chunk : chunks) {
 				// Only removes block if it is actually in the chunk
@@ -206,11 +209,11 @@ void PlayerController::Update(World* world)
 
 		if (wasHitFound)
 		{
-			printf("Hit\n");
+            LOG("Hit\n");
 			std::vector<Chunk*> chunks = world->GetChunksInsideArea(hit.hit.origin, hit.hit.size);
-			printf("Num Chunks: %d\n", chunks.size());
+            LOG("Num Chunks: %d\n", chunks.size());
 
-			printf("Hit occured at: (%f, %f, %f)\n", hit.hit.origin.x, hit.hit.origin.y, hit.hit.origin.z);
+            LOG("Hit occured at: (%f, %f, %f)\n", hit.hit.origin.x, hit.hit.origin.y, hit.hit.origin.z);
 
 			for (Chunk* chunk : chunks) {
 				// Only places block if the hit is actually in the chunk
@@ -224,7 +227,7 @@ void PlayerController::Update(World* world)
 		}
 		else
 		{
-			printf("No Hit\n");
+            LOG("No Hit\n");
 		}
 	}
 }

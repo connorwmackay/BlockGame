@@ -1,12 +1,14 @@
 #pragma once
 #include <vector>
-#include <glad/glad.h>
+#include <glad/gl.h>
 #include <GLFW/glfw3.h>
 #include <glm/vec3.hpp>
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#ifdef _DEBUG
+    #include <imgui.h>
+    #include <backends/imgui_impl_glfw.h>
+    #include <backends/imgui_impl_opengl3.h>
+#endif
 
 class World;
 
