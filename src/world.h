@@ -1,15 +1,14 @@
 #pragma once
 #include <future>
-#include <noiseutils.h>
 #include <glm/vec3.hpp>
+#include <FastNoise/FastNoise.h>
 
 #include "chunk.h"
 #include "entity.h"
 #include "worker.h"
 
-#include <noise/noise.h>
-
 #include "frustum.h"
+#include "terrain.h"
 
 struct ChunkNoiseSection
 {
@@ -22,26 +21,7 @@ class World
 	glm::vec3 lastKnownPlayerPos_;
 	std::vector<Chunk*> chunks_;
 
-	// Mountainous Terrain
-	noise::module::RidgedMulti baseMountainTerrainModule_;
-	noise::module::ScaleBias mountainTerrainModule_;
-
-	// Hilly Terrain
-	noise::module::Perlin baseHillyTerrainModule_;
-	noise::module::ScaleBias hillyTerrainModule_;
-
-	// Flat Terrain
-	noise::module::Perlin baseFlatTerrainModule_;
-	noise::module::ScaleBias flatTerrainModule_;
-
-	// Terrain Type
-	noise::module::Perlin terrainTypeModule_;
-
-	// Terrain Selector
-	noise::module::Select terrainSelectorModule_;
-
-	// Final Terrain
-	noise::module::Turbulence terrainTurbulenceModule_;
+    Terrain terrain_;
 
 	FastNoise::SmartNode<FastNoise::FractalFBm> temperatureNoise_;
 
@@ -52,7 +32,7 @@ class World
 	std::mutex generatingNoiseMutex_;
 
 	int yMin = -1; // num. chunks
-	int yMax = 4; // num. chunks (i.e. max - min would be the number of chunks high)
+	int yMax = 2; // num. chunks (i.e. max - min would be the number of chunks high)
 protected:
 	static Biome GetBiomeFromTemperature(float temperature);
 public:
@@ -83,6 +63,7 @@ public:
 	bool PerformRaycast(CollisionDetection::RaycastHit& hitOut, glm::vec3 hitStart, glm::vec3 direction, float distance, float stepColliderSize, int numSteps);
 
     void PlaceBlock(glm::vec3 worldLocation, uint8_t blockType);
+    void BreakBlock(glm::vec3 worldLocation);
 
 	std::vector<Chunk*>& GetChunks();
 };

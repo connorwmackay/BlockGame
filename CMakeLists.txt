@@ -55,20 +55,16 @@ file(GLOB_RECURSE SRC_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR
 add_executable(BlockGame
 	${SRC_FILES}
 	${IMGUI_FILES}
-    "${PROJECT_SOURCE_DIR}/Libraries/stb/stb_image.c" 
-    "${PROJECT_SOURCE_DIR}/Libraries/libnoise/noiseutils/noiseutils.cpp"
+    "${PROJECT_SOURCE_DIR}/Libraries/stb/stb_image.c"
 )
 
 # Setup Header Includes
 target_include_directories(BlockGame PUBLIC
     ${PROJECT_SOURCE_DIR}/Libraries/imgui
-    ${PROJECT_SOURCE_DIR}/Libraries/stb 
-    ${PROJECT_SOURCE_DIR}/Libraries/libnoise/include
-    ${PROJECT_SOURCE_DIR}/Libraries/libnoise/noiseutils
+    ${PROJECT_SOURCE_DIR}/Libraries/stb
 )
 
 # Setup the library dependencies
 target_link_libraries(BlockGame PUBLIC
     opengl32 glad_gl_core_45 glfw FastNoise glm::glm
-    ${PROJECT_SOURCE_DIR}/Libraries/libnoise/lib/LibNoise64.lib
 )
