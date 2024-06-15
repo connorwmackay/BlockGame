@@ -3,6 +3,8 @@ This is my attempt at making a Minecraft clone using OpenGL and C++. My previous
 
 ![Screenshot of the game running on Windows](screenshot.png)
 
+Available to download on [Itch.io](https://connorwmackay.itch.io/blockgame)
+
 # Current Features
 - Infinite terrain (on x and z axis). You can set minimum and maximum y values for terrain to render. For example a minimum y of 0 and maximum y of 3 would result in 3 chunks being used for the height in terrain generation.
 - Grassland, Desert, Snow and Forest biomes chosen based on a noise value per chunk that acts as the temperature of the chunk (low temperature creates a snow biome chunk, medium creates grassland, high creates desert). This will be expanded to be more intelligent i.e. take into account other noise-generated paramaters.
