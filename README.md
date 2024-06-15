@@ -14,10 +14,7 @@ This is my attempt at making a Minecraft clone using OpenGL and C++. My previous
 - Player Controller with Collision
 
 # Building
-This project uses CMake with FetchContent to fetch the required dependencies. However, several dependencies still need 
+This project uses CMake with FetchContent to fetch the required dependencies. However, the ImGui and Stb Image dependencies still need 
 to be manually put into a `Libraries` folder. You can download them [here](https://drive.google.com/drive/folders/1eDN8yw8NPw_SzJ8jSpk-5UMj-r6m_XMQ?usp=sharing).
 <br>
-Additionally, you will need to copy the `Assets` folder into the same folder as the executable that gets built. Also, 
-the libnoise library dependency was built for VS2022, so if you want to use something else or a different platform you 
-will need to build libnoise yourself and alter the CMakeLists.txt file. I plan on switching fully to FastNoise 2 so this 
-won't be a problem in the future.
+Additionally, you will need to copy the `Assets` folder into the same folder as the executable that gets built.

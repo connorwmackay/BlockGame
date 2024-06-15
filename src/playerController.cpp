@@ -182,17 +182,9 @@ void PlayerController::Update(World* world)
 		if (wasHitFound)
 		{
             LOG("Hit\n");
-			std::vector<Chunk*> chunks = world->GetChunksInsideArea(hit.hit.origin, hit.hit.size);
-            LOG("Num Chunks: %d\n", (int)chunks.size());
 
-            LOG("Hit occured at: (%f, %f, %f)\n", hit.hit.origin.x, hit.hit.origin.y, hit.hit.origin.z);
-
-			for (Chunk* chunk : chunks) {
-				// Only removes block if it is actually in the chunk
-				if (chunk->RemoveBlockAt(hit.hit.origin)) {
-					break;
-				}
-			}
+            // FIXME: Blocks aren't removed at the correct place. Bresenham's line algorithm could be the solution.
+            //world->BreakBlock(hit.hit.origin);
 		}
 		else
 		{
@@ -210,7 +202,9 @@ void PlayerController::Update(World* world)
 		if (wasHitFound)
 		{
             LOG("Hit\n");
-			world->PlaceBlock(hit.hit.origin, BLOCK_TYPE_STONE);
+
+            // FIXME: Blocks aren't placed in the correct place. Bresenham's line algorithm could be the solution.
+			//world->PlaceBlock(hit.hit.origin, BLOCK_TYPE_STONE);
 		}
 		else
 		{
