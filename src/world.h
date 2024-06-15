@@ -32,7 +32,7 @@ class World
 	std::mutex generatingNoiseMutex_;
 
 	int yMin = -1; // num. chunks
-	int yMax = 4; // num. chunks (i.e. max - min would be the number of chunks high)
+	int yMax = 2; // num. chunks (i.e. max - min would be the number of chunks high)
 protected:
 	static Biome GetBiomeFromTemperature(float temperature);
 public:
@@ -63,6 +63,7 @@ public:
 	bool PerformRaycast(CollisionDetection::RaycastHit& hitOut, glm::vec3 hitStart, glm::vec3 direction, float distance, float stepColliderSize, int numSteps);
 
     void PlaceBlock(glm::vec3 worldLocation, uint8_t blockType);
+    void BreakBlock(glm::vec3 worldLocation);
 
 	std::vector<Chunk*>& GetChunks();
 };

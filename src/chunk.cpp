@@ -573,36 +573,25 @@ std::vector<CollisionDetection::CollisionBox>& Chunk::GetCollisionBoxes() {
 	return collisionBoxes;
 }
 
-bool Chunk::RemoveBlockAt(glm::vec3 worldPosition)
+bool Chunk::RemoveBlockAt(glm::vec3 localBlockPos)
 {
-	glm::vec3 chunkPosition = worldPosition - transformComponent->GetTranslation();
+    if ((localBlockPos.x >= 0.0f && localBlockPos.x < size_) &&
+        (localBlockPos.y >= 0.0f && localBlockPos.y < size_) &&
+        (localBlockPos.z >= 0.0f && localBlockPos.z < size_)) {
+        LOG("Removed Block at (%f, %f, %f)\n", localBlockPos.x, localBlockPos.y, localBlockPos.z);
+        blocks_.at(localBlockPos.z).at(localBlockPos.x).at(localBlockPos.y) = BLOCK_TYPE_AIR;
+        Reload();
+        return true;
+    }
 
-	chunkPosition.x += size_ / 2;
-	chunkPosition.y += size_ / 2;
-	chunkPosition.z += size_ / 2;
-
-	if ((chunkPosition.x >= 0.0f && chunkPosition.x < size_) &&
-		(chunkPosition.y >= 0.0f && chunkPosition.y < size_) &&
-		(chunkPosition.z >= 0.0f && chunkPosition.z < size_)) {
-
-		blocks_.at(chunkPosition.z).at(chunkPosition.x).at(chunkPosition.y) = BLOCK_TYPE_AIR;
-		Reload();
-
-        LOG("Block Position <Inside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
-		return true;
-	}
-	else
-	{
-        LOG("Block Position <Outside Chunk>: (%f, %f, %f)\n", chunkPosition.x, chunkPosition.y, chunkPosition.z);
-	}
-
-	return false;
+    return false;
 }
 
 bool Chunk::PlaceBlockAt(glm::vec3 localPosition, uint8_t blockType) {
     if ((localPosition.x >= 0.0f && localPosition.x < size_) &&
         (localPosition.y >= 0.0f && localPosition.y < size_) &&
         (localPosition.z >= 0.0f && localPosition.z < size_)) {
+        LOG("Placed Block at (%f, %f, %f)\n", localPosition.x, localPosition.y, localPosition.z);
         blocks_.at(localPosition.z).at(localPosition.x).at(localPosition.y) = blockType;
         Reload();
         return true;

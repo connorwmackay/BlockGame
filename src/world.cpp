@@ -30,21 +30,6 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 	int startX = World::FindClosestPosition(currentPlayerPos.x, 16) - (16 * glm::floor(renderDistance_-1));
 
 	// Double render distance since it pertains to all sides
-
-	for (int z = 0; z < renderDistance * 2 + 1; z++)
-	{
-		for (int x = 0; x < renderDistance * 2 + 1; x++)
-		{
-			std::vector<float> chunkSectionNoise = GetNoiseForChunkSection(startX + x * 16.0f, startZ + z * 16.0f, 16);
-
-			float temperature = 0.0f;
-			temperatureNoise_->GenUniformGrid2D(&temperature, (startX + x * 16.0f) / 16.0f, (startZ + z * 16.0f) / 16.0f, 1, 1, 0.05f, seed_);
-			Biome biome = World::GetBiomeFromTemperature(temperature);
-
-			SetTreeBlocksForChunk(biome, (startX + x * 16.0f), (startZ + z * 16.0f), yMin, yMax, chunkSectionNoise, 16);
-		}
-	}
-
 	TextureData textureData = Texture::LoadTextureDataFromFile("./Assets/textureAtlas.png");
 	Texture2DArray texture = Texture2DArray(textureData, GL_TEXTURE_2D_ARRAY, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST, 6, 8);
 	Texture::FreeTextureData(textureData);
@@ -59,6 +44,7 @@ World::World(glm::vec3 currentPlayerPos, int renderDistance)
 			temperatureNoise_->GenUniformGrid2D(&temperature, (startX + x * 16.0f) / 16.0f, (startZ + z * 16.0f) / 16.0f, 1, 1, 0.05f, seed_);
 			Biome biome = World::GetBiomeFromTemperature(temperature);
 
+            SetTreeBlocksForChunk(biome, (startX + x * 16.0f), (startZ + z * 16.0f), yMin, yMax, chunkSectionNoise, 16);
 			for (int y = yMin; y <= yMax; y++) {
 				
 				chunks_.push_back(new Chunk(this, biome, texture, chunkSectionNoise, yMin, yMax, glm::vec3(startX + (x * 16.0f), y * 16.0f, startZ + (z * 16.0f)), 16, seed_));
@@ -252,7 +238,7 @@ bool World::LoadNewChunksAsync(int startX, int endX, int startZ, int endZ, std::
 
 std::vector<float> World::GetNoiseForChunkSection(int x, int z, int size)
 {
-	return terrain_.GetNoiseForChunk(x, z);;
+	return terrain_.GetElevationNoiseForChunk(x, z);;
 }
 
 Biome World::GetBiomeFromTemperature(float temperature)
@@ -467,4 +453,28 @@ void World::PlaceBlock(glm::vec3 worldLocation, uint8_t blockType) {
     }
 
     nearestChunk->PlaceBlockAt(localBlockPos, blockType);
+}
+
+void World::BreakBlock(glm::vec3 worldLocation) {
+    std::vector<Chunk*> chunks = GetChunksInsideArea(worldLocation, glm::vec3(1.0f, 1.0f, 1.0f));
+
+    if (chunks.empty())
+        return;
+
+    Chunk* nearestChunk = chunks[0];
+    glm::vec3 localBlockPos = chunks[0]->findNearestBlockPosition(worldLocation, true, false);
+    float minDistance = glm::distance(worldLocation, chunks[0]->getWorldPosition(localBlockPos));
+
+    for (Chunk* chunk : chunks) {
+        glm::vec3 nearestBlockPos = chunk->findNearestBlockPosition(worldLocation, false, true);
+        float curDistance = glm::distance(worldLocation, chunk->getWorldPosition(nearestBlockPos));
+
+        if (curDistance < minDistance) {
+            minDistance = curDistance;
+            localBlockPos = nearestBlockPos;
+            nearestChunk = chunk;
+        }
+    }
+
+    nearestChunk->RemoveBlockAt(localBlockPos);
 }

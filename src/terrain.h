@@ -5,10 +5,10 @@
 struct Terrain {
     int seed_;
 
-    FastNoise::SmartNode<FastNoise::DomainScale> mountainTerrain_;
+    FastNoise::SmartNode<FastNoise::DomainWarpGradient> elevationNoise_;
 
     Terrain() = default;
     Terrain(int seed);
 
-    std::vector<float> GetNoiseForChunk(int x, int z);
+    std::vector<float> GetElevationNoiseForChunk(int x, int z);
 };
